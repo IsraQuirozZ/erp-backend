@@ -1,90 +1,58 @@
-const { parse } = require("dotenv");
 const provinciaService = require("../services/provincia.service");
-const { provincia } = require("../config/prisma");
 
 // Consultar todas las provincias
-const getProvincias = async (req, res) => {
+const getProvincias = async (req, res, next) => {
   try {
     const provincias = await provinciaService.getAllProvincias();
     res.json(provincias);
   } catch (error) {
-    res.status(500).json({ error: "Error al obtener provincias" });
+    next(error);
   }
 };
 
 // Consultar provincia por ID
-const getProvincia = async (req, res) => {
+const getProvincia = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     const provincia = await provinciaService.getProvinciaById(id);
-
-    if (!provincia) {
-      return res.status(404).json({ error: "Provincia no encontrada" });
-    }
-
     res.json(provincia);
   } catch (error) {
-    res.status(500).json({ error: "Error al obtener provincia" });
+    next(error);
   }
 };
 
 // Crear provincia
-const createProvincia = async (req, res) => {
+const createProvincia = async (req, res, next) => {
   try {
     const provincia = await provinciaService.createProvincia(req.body);
     res.status(201).json(provincia);
   } catch (error) {
-    if (error.code === "P2002") {
-      return res.status(400).json({
-        error: "Ya existe una provincia con ese nombre",
-      });
-    }
-
-    res.status(500).json({ error: "Error al crear provincia" });
+    next(error);
   }
 };
 
 // Actualizar provincia
-const updateProvincia = async (req, res) => {
+const updateProvincia = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     const provincia = await provinciaService.updateProvincia(id, req.body);
-
-    if (!provincia) {
-      return res.status(404).json({ error: "Provincia no encontrada" });
-    }
-
     res.json(provincia);
   } catch (error) {
-    res.status(500).json({ error: "Error al actualizar provincia" });
+    next(error);
   }
 };
 
-// Borrar provincia
-const deleteProvincia = async (req, res) => {
+// Eliminar Provincia
+const deleteProvincia = async (req, res, next) => {
   try {
-    const id = parseInt(req.params.id);
-    const result = await provinciaService.deleteProvincia(id);
-
-    if (result.error === "NOT_FOUND") {
-      return res
-        .status(404)
-        .json({ error: `Provincia con id ${id} no encontrada` });
-    }
-
-    if (result.error === "HAY_DIRECCIONES") {
-      return res.status(409).json({
-        error:
-          "No se puede eliminar la provincia porque tiene direcciones asociadas",
-      });
-    }
+    const id = Number(req.params.id);
+    const provincia = await provinciaService.deleteProvincia(id);
 
     res.json({
-      message: `Provincia: ${provincia.nombre} con id ${provincia.id_provincia} eliminada correctamente`,
+      message: `Provincia "${provincia.nombre}" con id ${provincia.id_provincia} eliminada correctamente`,
     });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: "Error al eliminar provincia" });
+    next(error);
   }
 };
 
