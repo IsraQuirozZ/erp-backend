@@ -48,8 +48,8 @@ const createProvincia = async (req, res) => {
 const updateProvincia = async (req, res) => {
   try {
     const id = Number(req.params.id);
-    // Confirmar que existe la provincia
     const provincia = await provinciaService.updateProvincia(id, req.body);
+
     if (!provincia) {
       return res.status(404).json({ error: "Provincia no encontrada" });
     }

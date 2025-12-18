@@ -9,8 +9,23 @@ datasource db {
 }
 
 model Provincia {
-  id_provincia Int    @id @default(autoincrement())
-  nombre       String @unique @db.VarChar(50)
+  id_provincia  Int @id @default(autoincrement())
+  nombre        String @unique @db.VarChar(50)
+
+  direcciones Direccion[]
 
   @@map("PROVINCIA")
+}
+
+model Direccion {
+  id_direccion  Int @id @default(autoincrement())
+  calle         String @db.VarChar(150)
+  numero        String @db.VarChar(10)
+  codigo_postal String @db.VarChar(10)
+
+  // FK
+  id_provincia  Int
+  provincia     Provincia @relation(fields: [id_provincia], references: [id_provincia])
+
+  @@map("DIRECCION")
 }
