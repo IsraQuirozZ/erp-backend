@@ -64,16 +64,26 @@ const updateProvincia = async (req, res) => {
 const deleteProvincia = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const provincia = await provinciaService.deleteProvincia(id);
+    const result = await provinciaService.deleteProvincia(id);
 
-    if (!provincia) {
-      return res.status(404).json({ error: "Provincia no encontrada" });
+    if (result.error === "NOT_FOUND") {
+      return res
+        .status(404)
+        .json({ error: `Provincia con id ${id} no encontrada` });
+    }
+
+    if (result.error === "HAY_DIRECCIONES") {
+      return res.status(409).json({
+        error:
+          "No se puede eliminar la provincia porque tiene direcciones asociadas",
+      });
     }
 
     res.json({
-      message: `Provincia: ${provincia.nombre} con id: ${provincia.id_provincia} eliminada correctamente`,
+      message: `Provincia: ${provincia.nombre} con id ${provincia.id_provincia} eliminada correctamente`,
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: "Error al eliminar provincia" });
   }
 };
