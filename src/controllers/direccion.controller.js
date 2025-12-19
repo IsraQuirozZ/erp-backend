@@ -1,71 +1,52 @@
 const direccionService = require("../services/direccion.service");
 
-const getDirecciones = async (req, res) => {
+const getDirecciones = async (req, res, next) => {
   try {
     const direcciones = await direccionService.getAllDirecciones();
     res.json(direcciones);
   } catch (error) {
-    res.status(500).json({ error: "Error al obtener direcciones" });
+    next(error);
   }
 };
 
-const getDireccion = async (req, res) => {
+const getDireccion = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     const direccion = await direccionService.getDireccionById(id);
-
-    if (!direccion) {
-      return res
-        .status(404)
-        .json({ error: `Dirección con id: ${id}, no encontrada.` });
-    }
-
     res.json(direccion);
   } catch (error) {
-    res.status(500).json({ error: "Error al obtener dirección" });
+    next(error);
   }
 };
 
-const createDireccion = async (req, res) => {
+const createDireccion = async (req, res, next) => {
   try {
     const direccion = await direccionService.createDireccion(req.body);
     res.status(201).json(direccion);
   } catch (error) {
-    res.status(500).json({ error: "Error al crear dirección" });
+    next(error);
   }
 };
 
-const updateDireccion = async (req, res) => {
+const updateDireccion = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     const direccion = await direccionService.updateDireccion(id, req.body);
-
-    if (!direccion) {
-      return res
-        .status(404)
-        .json({ error: `Dirección con id: ${id} no encontrada` });
-    }
-
     res.json(direccion);
   } catch (error) {
-    res.status(500).json({ error: "Error al actualizar dirección" });
+    next(error);
   }
 };
 
-const deleteDireccion = async (req, res) => {
+const deleteDireccion = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     const direccion = await direccionService.deleteDireccion(id);
-
-    if (!direccion) {
-      return res
-        .status(404)
-        .json({ error: `Dirección con id: ${id} no encontrada` });
-    }
-
-    res.json(direccion);
+    res.json({
+      message: `Dirección: "${direccion.calle}, ${direccion.numero}" con id "${direccion.id_direccion}" eliminada correctamente`,
+    });
   } catch (error) {
-    res.status(500).json({ error: "Error al eliminar dirección" });
+    next(error);
   }
 };
 
