@@ -21,6 +21,10 @@ model Direccion {
   id_direccion  Int @id @default(autoincrement())
   calle         String @db.VarChar(150)
   numero        String @db.VarChar(10)
+  portal        String? @db.VarChar(10)
+  piso          String? @db.VarChar(10)
+  puerta        String? @db.VarChar(10)
+  municipio     String @db.VarChar(10)
   codigo_postal String @db.VarChar(10)
 
   // FK

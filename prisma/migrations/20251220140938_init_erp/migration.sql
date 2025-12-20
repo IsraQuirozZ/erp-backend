@@ -1,8 +1,21 @@
 -- CreateTable
+CREATE TABLE `PROVINCIA` (
+    `id_provincia` INTEGER NOT NULL AUTO_INCREMENT,
+    `nombre` VARCHAR(50) NOT NULL,
+
+    UNIQUE INDEX `PROVINCIA_nombre_key`(`nombre`),
+    PRIMARY KEY (`id_provincia`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `DIRECCION` (
     `id_direccion` INTEGER NOT NULL AUTO_INCREMENT,
     `calle` VARCHAR(150) NOT NULL,
     `numero` VARCHAR(10) NOT NULL,
+    `portal` VARCHAR(10) NULL,
+    `piso` VARCHAR(10) NULL,
+    `puerta` VARCHAR(10) NULL,
+    `municipio` VARCHAR(10) NOT NULL,
     `codigo_postal` VARCHAR(10) NOT NULL,
     `id_provincia` INTEGER NOT NULL,
 
