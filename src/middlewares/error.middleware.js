@@ -1,4 +1,8 @@
 const errorMiddleware = (err, req, res, next) => {
+  // Borrar en Producción
+  console.log("Error en middleware");
+  console.error("prisma code error: " + err.code);
+  console.error(err.meta);
   console.error(err);
 
   // Error con status definido (nuestros errores controlados)

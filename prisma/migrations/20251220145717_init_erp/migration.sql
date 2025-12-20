@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `DIRECCION` MODIFY `municipio` VARCHAR(150) NOT NULL;
