@@ -1,16 +1,16 @@
 const express = require("express");
-const provinciaRoutes = require("./routes/provincia.routes");
-const direccionRoutes = require("./routes/direccion.routes");
-const clienteRoutes = require("./routes/cliente.routes");
+const provinceRoutes = require("./routes/province.routes");
+const AddressRoutes = require("./routes/address.routes");
+const clientRoutes = require("./routes/client.routes");
 const errorMiddleware = require("./middlewares/error.middleware");
 
 const app = express();
 
 app.use(express.json());
 
-app.use("/api/provincias", provinciaRoutes);
-app.use("/api/direcciones", direccionRoutes);
-app.use("/api/clientes", clienteRoutes);
+app.use("/api/provinces", provinceRoutes);
+app.use("/api/addresses", AddressRoutes);
+app.use("/api/clients", clientRoutes);
 
 // Middleware global de errores (SIEMPRE EL ÚLTIMO)
 app.use(errorMiddleware);
