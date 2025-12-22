@@ -1,0 +1,115 @@
+const prisma = require("../config/prisma");
+
+const getAllAddresses = async () => {
+  return prisma.address.findMany({
+    orderBy: {
+      street: "asc",
+    },
+    include: {
+      province: true,
+    },
+  });
+};
+
+const getAddressById = async (id) => {
+  const address = await prisma.address.findUnique({
+    where: { id_address: id },
+    include: {
+      province: true,
+    },
+  });
+
+  if (!address) {
+    throw {
+      status: 404,
+      message: `Adress with id: ${id} not found`,
+    };
+  }
+
+  return address;
+};
+
+const createAddress = async (data) => {
+  const province = await prisma.province.findUnique({
+    where: { id_province: data.id_province },
+  });
+
+  if (!province) {
+    throw {
+      status: 400,
+      message: "Province not found",
+    };
+  }
+
+  return prisma.address.create({
+    include: {
+      province: true,
+    },
+    data,
+  });
+};
+
+const updateAddress = async (id, data) => {
+  const address = await prisma.address.findUnique({
+    where: { id_address: id },
+    include: {
+      province: true,
+    },
+  });
+
+  if (!address) {
+    throw {
+      status: 404,
+      message: "Address not found",
+    };
+  }
+
+  // Update the province
+  if (data.id_province) {
+    const province = await prisma.province.findUnique({
+      where: { id_province: data.id_province },
+    });
+
+    if (!province) {
+      throw {
+        status: 400,
+        message: "Province not exists",
+      };
+    }
+  }
+
+  return prisma.address.update({
+    where: { id_address: id },
+    include: {
+      province: true,
+    },
+    data: data,
+  });
+};
+
+const deleteAddress = async (id) => {
+  const address = await prisma.address.findUnique({
+    where: { id_address: id },
+  });
+
+  if (!address) {
+    throw {
+      status: 404,
+      message: `Address with ID ${id} not found`,
+    };
+  }
+
+  await prisma.address.delete({
+    where: { id_address: id },
+  });
+
+  return address;
+};
+
+module.exports = {
+  getAllAddresses,
+  getAddressById,
+  createAddress,
+  updateAddress,
+  deleteAddress,
+};
