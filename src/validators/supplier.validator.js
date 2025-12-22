@@ -54,12 +54,82 @@ const validateCreateSupplier = (req, res, next) => {
 
   // NORMALIZE
   req.body.name = capitalize(normalizedName);
-  req.body.phone = normalizedPhone;
+  req.body.phone = normalizedPhone.toLowerCase();
   req.body.email = normalizedEmail;
+
+  next();
+};
+
+const validateUpdateSupplier = (req, res, next) => {
+  const { name, phone, email, id_address } = req.body;
+
+  const normalizedName = name?.trim();
+  const normalizedPhone = phone?.trim();
+  const normalizedEmail = email?.trim();
+
+  if (
+    normalizedName === undefined &&
+    normalizedPhone === undefined &&
+    normalizedEmail === undefined &&
+    id_address === undefined
+  ) {
+    return res.status(400).json({
+      error: "At least one field must be provided to update the supplier",
+    });
+  }
+
+  // NAME
+  if (normalizedName !== undefined) {
+    if (typeof normalizedName !== "string" || normalizedName.length < 3) {
+      return res
+        .status(400)
+        .json({ error: "The name mus be a non-empty string" });
+    }
+
+    if (!onlyLettersRegex.test(normalizedName)) {
+      return res
+        .status(400)
+        .json({ error: "The name must contain only letters" });
+    }
+
+    req.body.name = capitalize(normalizedName);
+  }
+
+  // PHONE
+  if (normalizedPhone !== undefined) {
+    if (
+      typeof normalizedPhone !== "string" ||
+      !phoneRegex.test(normalizedPhone)
+    ) {
+      return res.status(400).json({
+        error: "The phone number must have 9 digits",
+      });
+    }
+    req.body.phone = normalizedPhone;
+  }
+
+  // EMAIL
+  if (normalizedEmail !== undefined) {
+    if (
+      typeof normalizedEmail !== "string" ||
+      !emailRegex.test(normalizedEmail)
+    ) {
+      return res.status(400).json({
+        error: "Email must be a valid email address",
+      });
+    }
+    req.body.email = normalizedEmail.toLowerCase();
+  }
+
+  // ID_ADDRESS
+  if (id_address !== undefined && typeof id_address !== "number") {
+    return res.status(400).json({ error: "The address ID must be a number" });
+  }
 
   next();
 };
 
 module.exports = {
   validateCreateSupplier,
+  validateUpdateSupplier,
 };
