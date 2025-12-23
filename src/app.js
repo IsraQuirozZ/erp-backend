@@ -2,7 +2,8 @@ const express = require("express");
 const provinceRoutes = require("./routes/province.routes");
 const AddressRoutes = require("./routes/address.routes");
 const clientRoutes = require("./routes/client.routes");
-const suppliersRoutes = require("./routes/supplier.routes");
+const supplierRoutes = require("./routes/supplier.routes");
+const departmentRoutes = require("./routes/department.routes");
 const errorMiddleware = require("./middlewares/error.middleware");
 
 const app = express();
@@ -12,7 +13,8 @@ app.use(express.json());
 app.use("/api/provinces", provinceRoutes);
 app.use("/api/addresses", AddressRoutes);
 app.use("/api/clients", clientRoutes);
-app.use("/api/suppliers", suppliersRoutes);
+app.use("/api/suppliers", supplierRoutes);
+app.use("/api/departments", departmentRoutes);
 
 // Middleware global de errores (SIEMPRE EL ÚLTIMO)
 app.use(errorMiddleware);

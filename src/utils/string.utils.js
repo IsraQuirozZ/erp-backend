@@ -6,6 +6,14 @@ const capitalize = (text) => {
     .join(" ");
 };
 
+const CapitalizeFirstLetter = (text) => {
+  if (text.length === 0) {
+    return "";
+  }
+  return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+};
+
 module.exports = {
   capitalize,
+  CapitalizeFirstLetter,
 };

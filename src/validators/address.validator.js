@@ -8,7 +8,7 @@ const validateCreateAddress = (req, res, next) => {
     portal,
     floor,
     door,
-    city,
+    municipality,
     postal_code,
     id_province,
   } = req.body;
@@ -54,15 +54,15 @@ const validateCreateAddress = (req, res, next) => {
     });
   }
 
-  // city
+  // municipality
   if (
-    !city ||
-    typeof city !== "string" ||
-    city.trim().length === 0 ||
-    !onlyLettersRegex.test(city.trim())
+    !municipality ||
+    typeof municipality !== "string" ||
+    municipality.trim().length === 0 ||
+    !onlyLettersRegex.test(municipality.trim())
   ) {
     return res.status(400).json({
-      error: "The city must be a non-empty string",
+      error: "The municipality must be a non-empty string",
     });
   }
 
@@ -96,7 +96,7 @@ const validateCreateAddress = (req, res, next) => {
   if (portal) req.body.portal = portal.trim();
   if (floor) req.body.floor = floor.trim();
   if (door) req.body.door = door.trim();
-  req.body.city = capitalize(city.trim());
+  req.body.municipality = capitalize(municipality.trim());
   req.body.postal_code = postal_code.trim();
 
   next();
@@ -109,7 +109,7 @@ const validateUpdateAddress = (req, res, next) => {
     portal,
     floor,
     door,
-    city,
+    municipality,
     postal_code,
     id_province,
   } = req.body;
@@ -120,7 +120,7 @@ const validateUpdateAddress = (req, res, next) => {
     portal === undefined &&
     floor === undefined &&
     door === undefined &&
-    city === undefined &&
+    municipality === undefined &&
     postal_code === undefined &&
     id_province === undefined
   ) {
@@ -171,18 +171,18 @@ const validateUpdateAddress = (req, res, next) => {
     return res.status(400).json({ error: "invalid door" });
   }
 
-  // city
-  if (city !== undefined) {
+  // municipality
+  if (municipality !== undefined) {
     if (
-      typeof city !== "string" ||
-      city.trim().length === 0 ||
-      !onlyLettersRegex.test(city.trim())
+      typeof municipality !== "string" ||
+      municipality.trim().length === 0 ||
+      !onlyLettersRegex.test(municipality.trim())
     ) {
       return res.status(400).json({
-        error: "The city must be a non-empty string",
+        error: "The municipality must be a non-empty string",
       });
     }
-    req.body.city = capitalize(city.trim());
+    req.body.municipality = capitalize(municipality.trim());
   }
 
   // CÓDIGO POSTAL
