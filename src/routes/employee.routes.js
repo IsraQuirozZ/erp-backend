@@ -1,15 +1,28 @@
 const express = require("express");
 const router = express.Router();
 const employeeController = require("../controllers/employee.controller");
-const { validateCreateEmployee } = require("../validators/employee.validator");
+const {
+  validateCreateEmployee,
+  validateUpdateEmployee,
+} = require("../validators/employee.validator");
 
 // getAllEmployees
 router.get("/", employeeController.getEmployees);
 
 // getEmployeeById
-router.get("/:id", employeeController.getEmployee);
+router.get("/:id", employeeController.getEmployeeById);
 
 // createEmployee
-router.post("/", validateCreateEmployee, employeeController.createEmployee);
+router.post("/", validateCreateEmployee, employeeController.createEmployeeById);
+
+// updateEmployeeById
+router.put(
+  "/:id",
+  validateUpdateEmployee,
+  employeeController.updateEmployeeById
+);
+
+// deleteEmployeeById
+router.delete("/:id", employeeController.deleteEmployeeById);
 
 module.exports = router;
