@@ -41,21 +41,31 @@ const createProvince = async (data) => {
 };
 
 const updateProvince = async (id, data) => {
-  const province = await prisma.province.findUnique({
-    where: { id_province: id },
-  });
+  try {
+    const province = await prisma.province.findUnique({
+      where: { id_province: id },
+    });
 
-  if (!province) {
-    throw {
-      status: 404,
-      message: "Province not found",
-    };
+    if (!province) {
+      throw {
+        status: 404,
+        message: "Province not found",
+      };
+    }
+
+    return await prisma.province.update({
+      where: { id_province: id },
+      data,
+    });
+  } catch (error) {
+    if (error.code === "P2002") {
+      throw {
+        status: 400,
+        message: "A province with this name already exists",
+      };
+    }
+    throw error;
   }
-
-  return prisma.province.update({
-    where: { id_province: id },
-    data,
-  });
 };
 
 const deleteProvince = async (id) => {

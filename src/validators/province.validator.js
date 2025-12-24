@@ -3,6 +3,12 @@ const { onlyLettersRegex } = require("../utils/regex.utils");
 
 // CreateProvince Validator
 const validateCreateProvince = (req, res, next) => {
+  if (req.body.id_province !== undefined) {
+    return res.status(400).json({
+      error: "Province ID must not be provided",
+    });
+  }
+
   const { name } = req.body;
 
   // 1. Not Exists // No-String // Empty

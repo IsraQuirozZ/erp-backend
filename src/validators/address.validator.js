@@ -93,9 +93,9 @@ const validateCreateAddress = (req, res, next) => {
   // normalize
   req.body.street = capitalize(street.trim());
   req.body.number = number.trim();
-  if (portal) req.body.portal = portal.trim();
-  if (floor) req.body.floor = floor.trim();
-  if (door) req.body.door = door.trim();
+  if (portal) req.body.portal = capitalize(portal.trim());
+  if (floor) req.body.floor = capitalize(floor.trim());
+  if (door) req.body.door = capitalize(door.trim());
   req.body.municipality = capitalize(municipality.trim());
   req.body.postal_code = postal_code.trim();
 
@@ -161,15 +161,19 @@ const validateUpdateAddress = (req, res, next) => {
     return res.status(400).json({ error: "invalid portal" });
   }
 
+  if (portal !== undefined) req.body.portal = capitalize(portal.trim());
+
   // floor
   if (floor !== undefined && typeof floor !== "string") {
     return res.status(400).json({ error: "invalid floor" });
   }
+  if (floor !== undefined) req.body.floor = capitalize(floor.trim());
 
   // door
   if (door !== undefined && typeof door !== "string") {
     return res.status(400).json({ error: "invalid door" });
   }
+  if (door !== undefined) req.body.door = capitalize(door.trim());
 
   // municipality
   if (municipality !== undefined) {

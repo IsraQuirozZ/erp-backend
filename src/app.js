@@ -4,6 +4,7 @@ const AddressRoutes = require("./routes/address.routes");
 const clientRoutes = require("./routes/client.routes");
 const supplierRoutes = require("./routes/supplier.routes");
 const departmentRoutes = require("./routes/department.routes");
+const employeeRoutes = require("./routes/employee.routes");
 const errorMiddleware = require("./middlewares/error.middleware");
 
 const app = express();
@@ -15,6 +16,7 @@ app.use("/api/addresses", AddressRoutes);
 app.use("/api/clients", clientRoutes);
 app.use("/api/suppliers", supplierRoutes);
 app.use("/api/departments", departmentRoutes);
+app.use("/api/employees", employeeRoutes);
 
 // Middleware global de errores (SIEMPRE EL ÚLTIMO)
 app.use(errorMiddleware);
