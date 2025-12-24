@@ -11,7 +11,7 @@ const validateCreateDepartment = async (req, res, next) => {
     });
   }
 
-  if (!onlyLettersRegex.test(name)) {
+  if (!onlyLettersRegex.test(name.trim())) {
     return res.status(400).json({
       error: "The department name must contain only letters and spaces",
     });
@@ -30,7 +30,7 @@ const validateCreateDepartment = async (req, res, next) => {
   const normalizedDesc = desc?.trim();
 
   req.body.name = capitalize(normalizedName);
-  req.body.desc = CapitalizeFirstLetter(normalizedDesc);
+  if (desc) req.body.desc = CapitalizeFirstLetter(normalizedDesc);
   next();
 };
 
