@@ -23,7 +23,7 @@ const getEmployeeById = async (id) => {
   return employee;
 };
 
-const createEmployeeById = async (data) => {
+const createEmployee = async (data) => {
   try {
     return await prisma.employee.create({
       data,
@@ -117,7 +117,7 @@ const deleteEmployeeById = async (id) => {
 module.exports = {
   getAllEmployees,
   getEmployeeById,
-  createEmployeeById,
+  createEmployee,
   updateEmployeeById,
   deleteEmployeeById,
 };

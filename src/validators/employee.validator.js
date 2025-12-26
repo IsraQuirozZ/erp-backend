@@ -92,17 +92,16 @@ const validateCreateEmployee = async (req, res, next) => {
   }
 
   const trimmedHireDate = hire_date.trim();
-
   const parsedHireDate = new Date(trimmedHireDate);
 
-  if (isNaN(parsedHireDate.getDate())) {
+  if (isNaN(parsedHireDate.getTime())) {
     return res.status(400).json({
       error: "Hire date must be a valid date",
     });
   }
 
-  const today = new Date();
-  if (parsedHireDate > today) {
+  const now = new Date();
+  if (parsedHireDate.getTime() > now.getTime()) {
     return res.status(400).json({
       error: "Hire date cannot be in the future",
     });
@@ -120,7 +119,9 @@ const validateCreateEmployee = async (req, res, next) => {
   }
 
   if (!salaryRegex.test(base_salary.trim())) {
-    return res.status(400).json({ error: "Base salary mut have only digits" });
+    return res
+      .status(400)
+      .json({ error: "Base salary mut have only digits aand one period" });
   }
 
   // ID_ADDRESS
