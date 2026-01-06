@@ -3,8 +3,8 @@ const {
   onlyLettersRegex,
   phoneRegex,
   emailRegex,
-  salaryRegex,
 } = require("../utils/regex.utils");
+const { validateDecimalField } = require("../utils/validators.utils");
 
 const validateCreateEmployee = async (req, res, next) => {
   if (req.body.id_employee !== undefined) {
@@ -52,7 +52,7 @@ const validateCreateEmployee = async (req, res, next) => {
   if (!onlyLettersRegex.test(lastName.trim())) {
     return res
       .status(400)
-      .json({ error: "The employee name must contain only letters" });
+      .json({ error: "Last name must contain only letters" });
   }
 
   // PHONE
@@ -107,21 +107,11 @@ const validateCreateEmployee = async (req, res, next) => {
     });
   }
 
-  // BASE_SALARY
-  if (
-    !base_salary ||
-    typeof base_salary !== "string" ||
-    base_salary.trim().length === 0
-  ) {
-    return res
-      .status(400)
-      .json({ error: "Base salary must be non-empty string" });
-  }
-
-  if (!salaryRegex.test(base_salary.trim())) {
-    return res
-      .status(400)
-      .json({ error: "Base salary mut have only digits aand one period" });
+  try {
+    // BASE_SALARY
+    req.body.base_salary = validateDecimalField(base_salary, "Base salary");
+  } catch (error) {
+    next(error);
   }
 
   // ID_ADDRESS
@@ -143,7 +133,6 @@ const validateCreateEmployee = async (req, res, next) => {
   req.body.email = email.trim().toLowerCase();
   req.body.job_title = capitalize(job_title.trim());
   req.body.hire_date = parsedHireDate;
-  req.body.base_salary = parseFloat(base_salary);
   next();
 };
 
@@ -261,14 +250,14 @@ const validateUpdateEmployee = async (req, res, next) => {
     const trimmedHireDate = hire_date.trim();
     const parsedHireDate = new Date(trimmedHireDate);
 
-    if (isNaN(parsedHireDate.getDate())) {
+    if (isNaN(parsedHireDate.getTime())) {
       return res.status(400).json({
         error: "Hire date must be a valid date",
       });
     }
 
     const today = new Date();
-    if (parsedHireDate > today) {
+    if (parsedHireDate.getTime() > today.getTime()) {
       return res.status(400).json({
         error: "Hire date cannot be in the future",
       });
@@ -277,21 +266,11 @@ const validateUpdateEmployee = async (req, res, next) => {
     req.body.hire_date = parsedHireDate;
   }
 
-  // BASE_SALARY
-  if (base_salary !== undefined) {
-    if (typeof base_salary !== "string" || base_salary.trim().length === 0) {
-      return res
-        .status(400)
-        .json({ error: "Base salary must be non-empty string" });
-    }
-
-    if (!salaryRegex.test(base_salary.trim())) {
-      return res
-        .status(400)
-        .json({ error: "Base salary mut have only digits" });
-    }
-
-    req.body.base_salary = parseFloat(base_salary);
+  try {
+    // BASE_SALARY
+    req.body.base_salary = validateDecimalField(base_salary, "Base salary");
+  } catch (error) {
+    next(error);
   }
 
   // ID_ADDRESS
