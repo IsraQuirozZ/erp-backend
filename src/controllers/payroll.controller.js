@@ -28,8 +28,29 @@ const createPayroll = async (req, res, next) => {
   }
 };
 
+const updatePayrollById = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const payroll = await payrollService.updatePayrollById(id, req.body);
+    res.json(payroll);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deletePayrollById = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const payroll = await payrollService.deletePayrollById(id);
+    res.json(payroll);
+  } catch (error) {
+    next(error);
+  }
+};
 module.exports = {
   getAllPayrolls,
   getPayrollById,
   createPayroll,
+  updatePayrollById,
+  deletePayrollById,
 };
