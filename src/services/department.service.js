@@ -77,7 +77,17 @@ const deleteDepartmentById = async (id) => {
     };
   }
 
-  // COMPROBAR EMPLEADOS ASOCIADOS...
+  // IF ASSOCIATED EMPLOYEES -> DON'T DELETE
+  const employeesCount = await prisma.employee.count({
+    where: { id_department: id },
+  });
+
+  if (employeesCount > 0) {
+    throw {
+      status: 400,
+      message: "Cannot delete department because it has associated employees.",
+    };
+  }
 
   await prisma.department.delete({
     where: { id_department: id },

@@ -19,9 +19,9 @@ const getEmployeeById = async (req, res, next) => {
   }
 };
 
-const createEmployeeById = async (req, res, next) => {
+const createEmployee = async (req, res, next) => {
   try {
-    const employee = await employeeService.createEmployeeById(req.body);
+    const employee = await employeeService.createEmployee(req.body);
     res.status(201).json(employee);
   } catch (error) {
     next(error);
@@ -51,7 +51,7 @@ const deleteEmployeeById = async (req, res, next) => {
 module.exports = {
   getEmployees,
   getEmployeeById,
-  createEmployeeById,
+  createEmployee,
   updateEmployeeById,
   deleteEmployeeById,
 };
