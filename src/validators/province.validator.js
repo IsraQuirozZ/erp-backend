@@ -33,6 +33,12 @@ const validateCreateProvince = (req, res, next) => {
 
 // UpdateProvince Validator
 const validateUpdateProvince = (req, res, next) => {
+  if (req.body.id_province !== undefined) {
+    return res.status(400).json({
+      error: "Province ID must not be provided",
+    });
+  }
+
   const { name } = req.body;
 
   // If Empty ->  error

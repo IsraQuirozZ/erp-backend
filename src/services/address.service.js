@@ -99,6 +99,25 @@ const deleteAddress = async (id) => {
     };
   }
 
+  const clientCount = await prisma.client.count({
+    where: { id_address: id },
+  });
+
+  const suppliersCount = await prisma.supplier.count({
+    where: { id_address: id },
+  });
+
+  const employeesCount = await prisma.employee.count({
+    where: { id_address: id },
+  });
+
+  if (clientCount > 0 || suppliersCount > 0 || employeesCount > 0) {
+    throw {
+      status: 409,
+      message: "Address cannot be deleted because it has associated records",
+    };
+  }
+
   await prisma.address.delete({
     where: { id_address: id },
   });

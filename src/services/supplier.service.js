@@ -96,6 +96,7 @@ const updateSupplier = async (id, data) => {
   }
 };
 
+// RULE FOR THE FUTURE --> Can not be deleted if it has associated records (orders,payments, invoices... etc)
 const deleteSupplier = async (id) => {
   const supplier = await prisma.supplier.findUnique({
     where: { id_supplier: id },

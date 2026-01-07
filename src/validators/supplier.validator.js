@@ -6,6 +6,10 @@ const {
 } = require("../utils/regex.utils");
 
 const validateCreateSupplier = (req, res, next) => {
+  if (req.body.id_supplier !== undefined) {
+    return res.status(400).json({ error: "Supplier ID must be not provided" });
+  }
+
   const { name, phone, email, id_address } = req.body || {};
 
   const normalizedName = name?.trim();
@@ -61,6 +65,10 @@ const validateCreateSupplier = (req, res, next) => {
 };
 
 const validateUpdateSupplier = (req, res, next) => {
+  if (req.body.id_supplier !== undefined) {
+    return res.status(400).json({ error: "Supplier ID must be not provided" });
+  }
+
   const { name, phone, email, id_address } = req.body;
 
   const normalizedName = name?.trim();

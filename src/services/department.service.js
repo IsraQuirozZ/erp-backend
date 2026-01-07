@@ -84,7 +84,7 @@ const deleteDepartmentById = async (id) => {
 
   if (employeesCount > 0) {
     throw {
-      status: 400,
+      status: 409,
       message: "Cannot delete department because it has associated employees.",
     };
   }

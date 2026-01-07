@@ -2,6 +2,10 @@ const { capitalize } = require("../utils/string.utils");
 const { onlyLettersRegex, onlyNumbersRegex } = require("../utils/regex.utils");
 
 const validateCreateAddress = (req, res, next) => {
+  if (req.body.id_address !== undefined) {
+    return res.status(400).json({ error: "Address ID must be not provided" });
+  }
+
   const {
     street,
     number,
@@ -103,16 +107,16 @@ const validateCreateAddress = (req, res, next) => {
 };
 
 const validateUpdateAddress = (req, res, next) => {
-  const {
-    street,
-    number,
-    portal,
-    floor,
-    door,
-    municipality,
-    postal_code,
-    id_province,
-  } = req.body;
+  if (req.body.id_address !== undefined) {
+    return res.status(400).json({ error: "Address ID must be not provided" });
+  }
+
+  if (req.body.id_province !== undefined) {
+    return res.status(400).json({ error: "The province can not be uptdated" });
+  }
+
+  const { street, number, portal, floor, door, municipality, postal_code } =
+    req.body;
 
   if (
     street === undefined &&
@@ -121,8 +125,7 @@ const validateUpdateAddress = (req, res, next) => {
     floor === undefined &&
     door === undefined &&
     municipality === undefined &&
-    postal_code === undefined &&
-    id_province === undefined
+    postal_code === undefined
   ) {
     return res.status(400).json({
       error: "At least one field must be provided to update the province",
@@ -204,12 +207,6 @@ const validateUpdateAddress = (req, res, next) => {
     }
 
     req.body.postal_code = postal_code.trim();
-  }
-
-  if (id_province !== undefined && typeof id_province !== "number") {
-    return res.status(400).json({
-      error: "The province id must be a non-empty number",
-    });
   }
 
   next();

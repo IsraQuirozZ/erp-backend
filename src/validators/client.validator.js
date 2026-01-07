@@ -6,6 +6,10 @@ const {
 } = require("../utils/regex.utils");
 
 const validateCreateClient = (req, res, next) => {
+  if (req.body.id_client) {
+    return res.status(400).json({ error: "Client ID must be not provided" });
+  }
+
   const { firstName, lastName, phone, email, id_address } = req.body;
 
   // firstName
@@ -66,6 +70,9 @@ const validateCreateClient = (req, res, next) => {
 };
 
 const validateUpdateClient = (req, res, next) => {
+  if (req.body.id_client) {
+    return res.status(400).json({ error: "Client ID must be not provided" });
+  }
   const { firstName, lastName, phone, email, id_address } = req.body;
 
   if (
