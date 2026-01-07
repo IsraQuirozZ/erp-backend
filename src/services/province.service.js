@@ -81,7 +81,7 @@ const deleteProvince = async (id) => {
     };
   }
 
-  // 2. Comprobar direcciones asociadas
+  // 2. Check associated addresses
   const addressCount = await prisma.address.count({
     where: { id_province: id },
   });
@@ -89,7 +89,7 @@ const deleteProvince = async (id) => {
   if (addressCount > 0) {
     throw {
       status: 409,
-      message: "Cannot delete province because it has associated addresses",
+      message: "Province cannot be deleted because it has associated addresses",
     };
   }
 

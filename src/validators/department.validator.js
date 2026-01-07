@@ -2,6 +2,12 @@ const { capitalize, CapitalizeFirstLetter } = require("../utils/string.utils");
 const { onlyLettersRegex } = require("../utils/regex.utils");
 
 const validateCreateDepartment = async (req, res, next) => {
+  if (req.body.id_department !== undefined) {
+    return res
+      .status(400)
+      .json({ error: "Department ID must be not provided" });
+  }
+
   const { name, desc } = req.body;
 
   // NAME
@@ -35,6 +41,12 @@ const validateCreateDepartment = async (req, res, next) => {
 };
 
 const validateUpdateDepartment = async (req, res, next) => {
+  if (req.body.id_department !== undefined) {
+    return res
+      .status(400)
+      .json({ error: "Department ID must be not provided" });
+  }
+
   const { name, desc } = req.body;
 
   if (name === undefined && desc === undefined) {

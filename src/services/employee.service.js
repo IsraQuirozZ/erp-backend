@@ -25,8 +25,31 @@ const getEmployeeById = async (id) => {
 
 const createEmployee = async (data) => {
   try {
+    const address = await prisma.address.findUnique({
+      where: { id_address: data.id_address },
+    });
+
+    if (!address) {
+      throw {
+        status: 400,
+        message: "The address provided does not exist",
+      };
+    }
+
+    const department = await prisma.department.findUnique({
+      where: { id_department: data.id_department },
+    });
+
+    if (!department) {
+      throw {
+        status: 400,
+        message: "The department provided does not exist",
+      };
+    }
+
     return await prisma.employee.create({
       data,
+      include: { address: true, department: true },
     });
   } catch (error) {
     if (error.code === "P2002") {
@@ -103,6 +126,17 @@ const deleteEmployeeById = async (id) => {
     throw {
       status: 404,
       message: "Employee not found",
+    };
+  }
+
+  const payrollsCount = await prisma.payroll.count({
+    where: { id_employee: id },
+  });
+
+  if (payrollsCount > 0) {
+    throw {
+      status: 409,
+      message: "Employee can not be deleted because it has associated payrolls",
     };
   }
 
