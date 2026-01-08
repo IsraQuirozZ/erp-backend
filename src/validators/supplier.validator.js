@@ -1,32 +1,21 @@
-const { capitalize } = require("../utils/string.utils");
-const {
-  onlyLettersRegex,
-  phoneRegex,
-  emailRegex,
-} = require("../utils/regex.utils");
+const { phoneRegex, emailRegex } = require("../utils/regex.utils");
+const { validateStringField } = require("../utils/validators.utils");
 
 const validateCreateSupplier = (req, res, next) => {
   if (req.body.id_supplier !== undefined) {
     return res.status(400).json({ error: "Supplier ID must be not provided" });
   }
 
-  const { name, phone, email, id_address } = req.body || {};
+  const { name, phone, email, id_address, active } = req.body || {};
 
-  const normalizedName = name?.trim();
   const normalizedPhone = phone?.trim();
   const normalizedEmail = email?.trim();
 
-  // NAME
-  if (!name || typeof name !== "string" || normalizedName.length < 3) {
-    return res.status(400).json({
-      error: "The supplier's name must be a non-empty string",
-    });
-  }
-
-  if (!onlyLettersRegex.test(normalizedName)) {
-    return res.status(400).json({
-      error: "The supplier's name must contain only letters",
-    });
+  try {
+    // NAME
+    req.body.name = validateStringField(name, "Name", { onlyLetters: true });
+  } catch (error) {
+    return next(error);
   }
 
   // PHONE
@@ -51,15 +40,22 @@ const validateCreateSupplier = (req, res, next) => {
     });
   }
 
+  // ACTIVE
+  if (active !== undefined && typeof active !== "boolean") {
+    return res.status(400).json({ error: "Active must be a boolean value" });
+  }
+
   // ID_ADDRESS
   if (!id_address || typeof id_address !== "number") {
     return res.status(400).json({ error: "The address ID must be a number" });
   }
 
   // NORMALIZE
-  req.body.name = capitalize(normalizedName);
   req.body.phone = normalizedPhone.toLowerCase();
   req.body.email = normalizedEmail;
+  if (active === undefined) {
+    req.body.active = true;
+  }
 
   next();
 };
@@ -69,17 +65,17 @@ const validateUpdateSupplier = (req, res, next) => {
     return res.status(400).json({ error: "Supplier ID must be not provided" });
   }
 
-  const { name, phone, email, id_address } = req.body;
+  const { name, phone, email, id_address, active } = req.body;
 
-  const normalizedName = name?.trim();
   const normalizedPhone = phone?.trim();
   const normalizedEmail = email?.trim();
 
   if (
-    normalizedName === undefined &&
+    name === undefined &&
     normalizedPhone === undefined &&
     normalizedEmail === undefined &&
-    id_address === undefined
+    id_address === undefined &&
+    active === undefined
   ) {
     return res.status(400).json({
       error: "At least one field must be provided to update the supplier",
@@ -87,20 +83,13 @@ const validateUpdateSupplier = (req, res, next) => {
   }
 
   // NAME
-  if (normalizedName !== undefined) {
-    if (typeof normalizedName !== "string" || normalizedName.length < 3) {
-      return res
-        .status(400)
-        .json({ error: "The name mus be a non-empty string" });
+  try {
+    // NAME
+    if (name !== undefined) {
+      req.body.name = validateStringField(name, "Name", { onlyLetters: true });
     }
-
-    if (!onlyLettersRegex.test(normalizedName)) {
-      return res
-        .status(400)
-        .json({ error: "The name must contain only letters" });
-    }
-
-    req.body.name = capitalize(normalizedName);
+  } catch (error) {
+    return next(error);
   }
 
   // PHONE
@@ -132,6 +121,11 @@ const validateUpdateSupplier = (req, res, next) => {
   // ID_ADDRESS
   if (id_address !== undefined && typeof id_address !== "number") {
     return res.status(400).json({ error: "The address ID must be a number" });
+  }
+
+  // ACTIVE (OPTIONAL, DEFAULT TRUE)
+  if (active !== undefined && typeof active !== "boolean") {
+    return res.status(400).json({ error: "Active must be a boolean value" });
   }
 
   next();

@@ -4,7 +4,10 @@ const {
   phoneRegex,
   emailRegex,
 } = require("../utils/regex.utils");
-const { validateDecimalField } = require("../utils/validators.utils");
+const {
+  validateDecimalField,
+  validateStringField,
+} = require("../utils/validators.utils");
 
 const validateCreateEmployee = async (req, res, next) => {
   if (req.body.id_employee !== undefined) {
@@ -23,37 +26,8 @@ const validateCreateEmployee = async (req, res, next) => {
     base_salary,
     id_address,
     id_department,
+    active,
   } = req.body;
-
-  // FIRSTNAME
-  if (
-    !firstName ||
-    typeof firstName !== "string" ||
-    firstName.trim().length < 3
-  ) {
-    return res
-      .status(400)
-      .json({ error: "The employee must have a valid name" });
-  }
-
-  if (!onlyLettersRegex.test(firstName.trim())) {
-    return res
-      .status(400)
-      .json({ error: "The employee name must contain only letters" });
-  }
-
-  // LASTNAME
-  if (!lastName || typeof lastName !== "string" || lastName.trim().length < 3) {
-    return res
-      .status(400)
-      .json({ error: "The employee must have a valid last name" });
-  }
-
-  if (!onlyLettersRegex.test(lastName.trim())) {
-    return res
-      .status(400)
-      .json({ error: "Last name must contain only letters" });
-  }
 
   // PHONE
   if (!phone || typeof phone !== "string" || !phoneRegex.test(phone.trim())) {
@@ -65,23 +39,6 @@ const validateCreateEmployee = async (req, res, next) => {
     return res
       .status(400)
       .json({ error: "Email must be a valid email address" });
-  }
-
-  // JOB_TITLE
-  if (
-    !job_title ||
-    typeof job_title !== "string" ||
-    job_title.trim().length === 0
-  ) {
-    return res
-      .status(400)
-      .json({ error: "The job title must be a non-empty string" });
-  }
-
-  if (!onlyLettersRegex.test(job_title.trim())) {
-    return res
-      .status(400)
-      .json({ error: "The job title must contain only letters" });
   }
 
   // HIRE_DATE -> Standar format: YYYY/MM/DD
@@ -108,10 +65,31 @@ const validateCreateEmployee = async (req, res, next) => {
   }
 
   try {
+    // FIRSTNAME
+    req.body.firstName = validateStringField(firstName, "Name", {
+      onlyLetters: true,
+    });
+
+    // LASTNAME
+    req.body.lastName = validateStringField(lastName, "Last Name", {
+      onlyLetters: true,
+    });
+
+    // JOB_TITLE
+    req.body.job_title = validateStringField(job_title, "Last Name", {
+      onlyLetters: true,
+      capitalizeFirst: true,
+    });
+
     // BASE_SALARY
     req.body.base_salary = validateDecimalField(base_salary, "Base salary");
   } catch (error) {
     next(error);
+  }
+
+  // ACTIVE
+  if (active !== undefined && typeof active !== "boolean") {
+    return res.status(400).json({ error: "Active must be a boolean value" });
   }
 
   // ID_ADDRESS
@@ -127,12 +105,13 @@ const validateCreateEmployee = async (req, res, next) => {
   }
 
   // NORMALIZE
-  req.body.firstName = capitalize(firstName.trim());
-  req.body.lastName = capitalize(lastName.trim());
   req.body.phone = phone.trim();
   req.body.email = email.trim().toLowerCase();
-  req.body.job_title = capitalize(job_title.trim());
   req.body.hire_date = parsedHireDate;
+  if (active === undefined) {
+    req.body.active = true;
+  }
+
   next();
 };
 
@@ -152,6 +131,7 @@ const validateUpdateEmployee = async (req, res, next) => {
     base_salary,
     id_address,
     id_department,
+    active,
   } = req.body;
 
   if (
@@ -163,43 +143,12 @@ const validateUpdateEmployee = async (req, res, next) => {
     hire_date === undefined &&
     base_salary === undefined &&
     id_address === undefined &&
-    id_department === undefined
+    id_department === undefined &&
+    active === undefined
   ) {
     return res.status(400).json({
       error: "At least one field must be provided to update the employee",
     });
-  }
-
-  // FIRSTNAME
-  if (firstName !== undefined) {
-    if (typeof firstName !== "string" || firstName.trim().length < 3) {
-      return res
-        .status(400)
-        .json({ error: "The employee must have a valid name" });
-    }
-
-    if (!onlyLettersRegex.test(firstName.trim())) {
-      return res.status(400).json({ error: "Name must contain only letters" });
-    }
-
-    req.body.firstName = capitalize(firstName.trim());
-  }
-
-  // LASTNAME
-  if (lastName !== undefined) {
-    if (typeof lastName !== "string" || lastName.trim().length < 3) {
-      return res
-        .status(400)
-        .json({ error: "The employee must have a valid last name" });
-    }
-
-    if (!onlyLettersRegex.test(lastName.trim())) {
-      return res
-        .status(400)
-        .json({ error: "Last name must contain only letters" });
-    }
-
-    req.body.lastName = capitalize(lastName.trim());
   }
 
   // PHONE
@@ -222,23 +171,6 @@ const validateUpdateEmployee = async (req, res, next) => {
     }
 
     req.body.email = email.trim().toLowerCase();
-  }
-
-  // JOB_TITLE
-  if (job_title !== undefined) {
-    if (typeof job_title !== "string" || job_title.trim().length === 0) {
-      return res
-        .status(400)
-        .json({ error: "Job title must be a non-empty string" });
-    }
-
-    if (!onlyLettersRegex.test(job_title.trim())) {
-      return res
-        .status(400)
-        .json({ error: "Job title must contain only letters" });
-    }
-
-    req.body.job_title = capitalize(job_title.trim());
   }
 
   // HIRE_DATE
@@ -267,6 +199,28 @@ const validateUpdateEmployee = async (req, res, next) => {
   }
 
   try {
+    // FIRSTNAME
+    if (firstName !== undefined) {
+      req.body.firstName = validateStringField(firstName, "Name", {
+        onlyLetters: true,
+      });
+    }
+
+    // LASTNAME
+    if (lastName !== undefined) {
+      req.body.lastName = validateStringField(lastName, "Last Name", {
+        onlyLetters: true,
+      });
+    }
+
+    // JOB_TITLE
+    if (job_title !== undefined) {
+      req.body.job_title = validateStringField(job_title, "Last Name", {
+        onlyLetters: true,
+        capitalizeFirst: true,
+      });
+    }
+
     // BASE_SALARY
     req.body.base_salary = validateDecimalField(base_salary, "Base salary");
   } catch (error) {
@@ -283,6 +237,11 @@ const validateUpdateEmployee = async (req, res, next) => {
     return res
       .status(400)
       .json({ error: "The department ID must be a number" });
+  }
+
+  // ACTIVE (OPTIONAL, DEFAULT TRUE)
+  if (active !== undefined && typeof active !== "boolean") {
+    return res.status(400).json({ error: "Active must be a boolean value" });
   }
 
   next();

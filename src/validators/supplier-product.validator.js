@@ -1,0 +1,115 @@
+const {
+  validateDecimalField,
+  validateStringField,
+} = require("../utils/validators.utils");
+
+const validateCreateSupplierProduct = async (req, res, next) => {
+  if (req.body.id_supplier_product) {
+    return res
+      .status(400)
+      .json({ error: "Supplier Product ID must not be provided" });
+  }
+
+  const { name, purchase_price, description, active, id_supplier } = req.body;
+
+  try {
+    // NAME
+    req.body.name = validateStringField(name, "Name");
+
+    // PURCHASE_PRICES
+    req.body.purchase_price = validateDecimalField(
+      purchase_price,
+      "Purchase Price"
+    );
+
+    // DESCRIPTION -> OPTIONAL
+    req.body.description = validateStringField(description, "Description", {
+      required: false,
+      capitalizeFirst: true,
+    });
+  } catch (error) {
+    return next(error);
+  }
+
+  // ACTIVE (OPTIONAL, DEFAULT TRUE)
+  if (active !== undefined && typeof active !== "boolean") {
+    return res.status(400).json({ error: "Active must be a boolean value" });
+  }
+
+  // ID_SUPPLIER
+  if (!id_supplier || typeof id_supplier !== "number") {
+    return res
+      .status(400)
+      .json({ error: "Supplier ID si required and must be a number" });
+  }
+
+  // NORMALIZE
+  if (active === undefined) {
+    req.body.active = true;
+  }
+
+  next();
+};
+
+const validateUpdateSupplierProduct = async (req, res, next) => {
+  if (req.body.id_supplier_product) {
+    return res
+      .status(400)
+      .json({ error: "Supplier Product ID must not be provided" });
+  }
+
+  if (req.body.id_supplier !== undefined) {
+    return res.status(400).json({ error: "The supplier can not be updated" });
+  }
+
+  const { name, purchase_price, description, active } = req.body;
+
+  if (
+    name === undefined &&
+    purchase_price === undefined &&
+    description === undefined &&
+    active === undefined
+  ) {
+    return res.status(400).json({
+      error:
+        "At least one field must be provided to update the supplier product",
+    });
+  }
+
+  try {
+    // NAME
+    if (name !== undefined) {
+      req.body.name = validateStringField(name, "Name");
+    }
+
+    // PURCHASE_PRICES
+    if (purchase_price !== undefined) {
+      req.body.purchase_price = validateDecimalField(
+        purchase_price,
+        "Purchase Price"
+      );
+    }
+
+    // DESCRIPTION
+    if (description !== undefined) {
+      req.body.description = validateStringField(description, "Description", {
+        required: false,
+        capitalizeFirst: true,
+      });
+    }
+  } catch (error) {
+    return next(error);
+  }
+
+  // ACTIVE (OPTIONAL, DEFAULT TRUE)
+  if (active !== undefined && typeof active !== "boolean") {
+    return res.status(400).json({ error: "Active must be a boolean value" });
+  }
+
+  next();
+};
+
+module.exports = {
+  validateCreateSupplierProduct,
+  validateUpdateSupplierProduct,
+};

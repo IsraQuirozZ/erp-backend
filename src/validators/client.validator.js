@@ -1,45 +1,25 @@
-const { capitalize } = require("../utils/string.utils");
-const {
-  onlyLettersRegex,
-  phoneRegex,
-  emailRegex,
-} = require("../utils/regex.utils");
+const { phoneRegex, emailRegex } = require("../utils/regex.utils");
+const { validateStringField } = require("../utils/validators.utils");
 
 const validateCreateClient = (req, res, next) => {
   if (req.body.id_client) {
     return res.status(400).json({ error: "Client ID must be not provided" });
   }
 
-  const { firstName, lastName, phone, email, id_address } = req.body;
+  const { firstName, lastName, phone, email, id_address, active } = req.body;
 
-  // firstName
-  if (
-    !firstName ||
-    typeof firstName !== "string" ||
-    firstName.trim().length < 3
-  ) {
-    return res.status(400).json({
-      error: "The name nust be a non-empty string",
+  try {
+    // FIRSTNAME
+    req.body.firstName = validateStringField(firstName, "Name", {
+      onlyLetters: true,
     });
-  }
 
-  if (!onlyLettersRegex.test(firstName.trim())) {
-    return res.status(400).json({
-      error: "The name must contain only letters",
+    // LASTNAME
+    req.body.lastName = validateStringField(lastName, "Last Name", {
+      onlyLetters: true,
     });
-  }
-
-  // lastName
-  if (!lastName || typeof lastName !== "string" || lastName.trim().length < 3) {
-    return res.status(400).json({
-      error: "The last name must be a non-empty string",
-    });
-  }
-
-  if (!onlyLettersRegex.test(lastName.trim())) {
-    return res.status(400).json({
-      error: "The last name must contain only letters",
-    });
+  } catch (error) {
+    return next(error);
   }
 
   // phone
@@ -56,15 +36,22 @@ const validateCreateClient = (req, res, next) => {
     });
   }
 
+  // ACTIVE
+  if (active !== undefined && typeof active !== "boolean") {
+    return res.status(400).json({ error: "Active must be a boolean value" });
+  }
+
   // id_address
   if (!id_address || typeof id_address !== "number") {
     return res.status(400).json({ error: "The address ID must be a number" });
   }
 
-  req.body.firstName = capitalize(firstName.trim());
-  req.body.lastName = capitalize(lastName.trim());
+  // NORMALIZE
   req.body.phone = phone.trim();
   req.body.email = email.trim().toLowerCase();
+  if (active === undefined) {
+    req.body.active = true;
+  }
 
   next();
 };
@@ -73,51 +60,37 @@ const validateUpdateClient = (req, res, next) => {
   if (req.body.id_client) {
     return res.status(400).json({ error: "Client ID must be not provided" });
   }
-  const { firstName, lastName, phone, email, id_address } = req.body;
+  const { firstName, lastName, phone, email, id_address, active } = req.body;
 
   if (
     firstName === undefined &&
     lastName === undefined &&
     phone === undefined &&
     email === undefined &&
-    id_address === undefined
+    id_address === undefined &&
+    active === undefined
   ) {
     return res.status(400).json({
       error: "At least one field must be provided to update the client",
     });
   }
 
-  // firstName
-  if (firstName !== undefined) {
-    if (typeof firstName !== "string" || firstName.trim().length < 3) {
-      return res.status(400).json({
-        error: "The name nust be a non-empty string",
+  try {
+    // FIRSTNAME
+    if (firstName !== undefined) {
+      req.body.firstName = validateStringField(firstName, "Name", {
+        onlyLetters: true,
       });
     }
 
-    if (!onlyLettersRegex.test(firstName.trim())) {
-      return res.status(400).json({
-        error: "The name must contain only letters",
+    // LASTNAME
+    if (lastName !== undefined) {
+      req.body.lastName = validateStringField(lastName, "Last Name", {
+        onlyLetters: true,
       });
     }
-
-    req.body.firstName = capitalize(firstName.trim());
-  }
-
-  // lastName
-  if (lastName !== undefined) {
-    if (typeof lastName !== "string" || lastName.trim().length < 3) {
-      return res.status(400).json({
-        error: "The last name must be a non-empty string",
-      });
-    }
-
-    if (!onlyLettersRegex.test(lastName.trim())) {
-      return res.status(400).json({
-        error: "The last name must contain only letters",
-      });
-    }
-    req.body.lastName = capitalize(lastName.trim());
+  } catch (error) {
+    return next(error);
   }
 
   //  phone
@@ -144,6 +117,11 @@ const validateUpdateClient = (req, res, next) => {
   // id_address
   if (id_address !== undefined && typeof id_address !== "number") {
     return res.status(400).json({ error: "The address ID must be a number" });
+  }
+
+  // ACTIVE (OPTIONAL, DEFAULT TRUE)
+  if (active !== undefined && typeof active !== "boolean") {
+    return res.status(400).json({ error: "Active must be a boolean value" });
   }
 
   next();
