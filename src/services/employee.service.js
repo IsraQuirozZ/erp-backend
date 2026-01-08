@@ -2,8 +2,9 @@ const prisma = require("../config/prisma");
 
 const getAllEmployees = async () => {
   return await prisma.employee.findMany({
+    where: { active: true },
     orderBy: { firstName: "asc" },
-    include: { address: true, department: true },
+    // include: { address: true, department: true },
   });
 };
 
@@ -117,6 +118,7 @@ const updateEmployeeById = async (id, data) => {
   }
 };
 
+// SOFT DELETE
 const deleteEmployeeById = async (id) => {
   const employee = await prisma.employee.findUnique({
     where: { id_employee: id },
@@ -129,6 +131,7 @@ const deleteEmployeeById = async (id) => {
     };
   }
 
+  // If payroll associated -> Don't delete
   const payrollsCount = await prisma.payroll.count({
     where: { id_employee: id },
   });
@@ -140,12 +143,11 @@ const deleteEmployeeById = async (id) => {
     };
   }
 
-  await prisma.employee.delete({
+  return await prisma.employee.update({
     where: { id_employee: id },
     include: { address: true, department: true },
+    data: { active: false },
   });
-
-  return employee;
 };
 
 module.exports = {

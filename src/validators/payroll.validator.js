@@ -104,6 +104,7 @@ const validateUpdatePayroll = async (req, res, next) => {
   if (req.body.id_employee !== undefined) {
     return res.status(400).json({ error: "The employee can not be updated" });
   }
+
   const {
     period,
     base_salary,

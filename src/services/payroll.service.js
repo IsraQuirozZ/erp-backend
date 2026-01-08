@@ -24,7 +24,19 @@ const getPayrollById = async (id) => {
 };
 
 const createPayroll = async (data) => {
-  return await prisma.payroll.create({
+  const employee = await prisma.employee.findUnique({
+    where: { id_employee: data.id_employee },
+  });
+
+  if (!employee) {
+    throw {
+      status: 400,
+      message: "The employee provided does not exist",
+    };
+  }
+
+  return prisma.payroll.create({
+    include: { employee: true },
     data,
   });
 };

@@ -99,6 +99,7 @@ const deleteAddress = async (id) => {
     };
   }
 
+  // If CLIENT/SUPPLIER/EMPLOYEE associated -> Don't delete
   const clientCount = await prisma.client.count({
     where: { id_address: id },
   });

@@ -10,6 +10,6 @@ router.get("/", clientController.getClients);
 router.get("/:id", clientController.getClient);
 router.post("/", validateCreateClient, clientController.createClient);
 router.put("/:id", validateUpdateClient, clientController.updateClient);
-router.delete("/:id", clientController.deleteClient);
+router.delete("/:id", clientController.deleteClientById);
 
 module.exports = router;

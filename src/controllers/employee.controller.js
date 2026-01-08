@@ -42,7 +42,9 @@ const deleteEmployeeById = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     const employee = await employeeService.deleteEmployeeById(id);
-    res.json(employee);
+    res.json({
+      message: `Employee --${employee.firstName} ${employee.lastName}-- with ID ${employee.id_employee} successfully deleted`,
+    });
   } catch (error) {
     next(error);
   }

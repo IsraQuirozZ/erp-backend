@@ -9,7 +9,11 @@ const {
 router.get("/", supplierController.getSuppliers);
 router.get("/:id", supplierController.getSupplier);
 router.post("/", validateCreateSupplier, supplierController.createSupplier);
-router.put("/:id", validateUpdateSupplier, supplierController.updateSupplier);
-router.delete("/:id", supplierController.deleteSupplier);
+router.put(
+  "/:id",
+  validateUpdateSupplier,
+  supplierController.updateSupplierById
+);
+router.delete("/:id", supplierController.deleteSupplierById);
 
 module.exports = router;

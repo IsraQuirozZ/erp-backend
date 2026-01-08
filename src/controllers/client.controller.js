@@ -38,10 +38,10 @@ const updateClient = async (req, res, next) => {
   }
 };
 
-const deleteClient = async (req, res, next) => {
+const deleteClientById = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
-    const client = await clientService.deleteClient(id);
+    const client = await clientService.deleteClientById(id);
     res.json({
       message: `Client --${client.firstName} ${client.lastName}-- With ID ${client.id_client} successfully deleted`,
     });
@@ -55,5 +55,5 @@ module.exports = {
   getClient,
   createClient,
   updateClient,
-  deleteClient,
+  deleteClientById,
 };

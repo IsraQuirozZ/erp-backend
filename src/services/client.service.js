@@ -2,6 +2,7 @@ const prisma = require("../config/prisma");
 
 const getAllClients = async () => {
   return prisma.client.findMany({
+    where: { active: true },
     orderBy: {
       firstName: "asc",
     },
@@ -97,8 +98,9 @@ const updateClient = async (id, data) => {
   }
 };
 
+// SOFT DELETE
 // RULE FOR THE FUTURE --> Can not be deleted if it has associated records (orders,payments, invoices... etc)
-const deleteClient = async (id) => {
+const deleteClientById = async (id) => {
   const client = await prisma.client.findUnique({
     where: { id_client: id },
   });
@@ -110,12 +112,11 @@ const deleteClient = async (id) => {
     };
   }
 
-  await prisma.client.delete({
+  return await prisma.client.update({
     where: { id_client: id },
     include: { address: true },
+    data: { active: false },
   });
-
-  return client;
 };
 
 module.exports = {
@@ -123,5 +124,5 @@ module.exports = {
   getClientById,
   createClient,
   updateClient,
-  deleteClient,
+  deleteClientById,
 };

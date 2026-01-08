@@ -90,7 +90,7 @@ const validateCreateAddress = (req, res, next) => {
   // id_province
   if (!id_province || typeof id_province !== "number") {
     return res.status(400).json({
-      error: "Province ID si mandatory and must be a number",
+      error: "Province ID is required and must be a number",
     });
   }
 

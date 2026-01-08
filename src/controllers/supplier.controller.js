@@ -1,4 +1,3 @@
-const prisma = require("../config/prisma");
 const supplierService = require("../services/supplier.service");
 
 const getSuppliers = async (req, res, next) => {
@@ -29,20 +28,21 @@ const createSupplier = async (req, res, next) => {
   }
 };
 
-const updateSupplier = async (req, res, next) => {
+const updateSupplierById = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
-    const supplier = await supplierService.updateSupplier(id, req.body);
+    const supplier = await supplierService.updateSupplierById(id, req.body);
     res.json(supplier);
   } catch (error) {
     next(error);
   }
 };
 
-const deleteSupplier = async (req, res, next) => {
+// Soft Delete
+const deleteSupplierById = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
-    const supplier = await supplierService.deleteSupplier(id);
+    const supplier = await supplierService.deleteSupplierById(id);
     res.json({
       message: `Supplier --${supplier.name}-- with ID ${supplier.id_supplier} successfully deleted`,
     });
@@ -55,6 +55,6 @@ module.exports = {
   getSuppliers,
   getSupplier,
   createSupplier,
-  updateSupplier,
-  deleteSupplier,
+  updateSupplierById,
+  deleteSupplierById,
 };
