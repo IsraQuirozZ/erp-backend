@@ -3,6 +3,7 @@ const router = express.Router();
 const supplierOrderController = require("../controllers/supplier-order.controller");
 const {
   validateCreateSupplierOrder,
+  validateUpdateSupplierOrder,
 } = require("../validators/supplier-order.validator");
 
 // getAllOrders
@@ -16,4 +17,13 @@ router.post(
   supplierOrderController.createSupplierOrder
 );
 
+// updateOrderById
+router.put(
+  "/:id",
+  validateUpdateSupplierOrder,
+  supplierOrderController.updateSupplierOrderById
+);
+
+// deleteOrderById -> Soft delete
+router.delete("/:id", supplierOrderController.deleteSupplierOrderById);
 module.exports = router;

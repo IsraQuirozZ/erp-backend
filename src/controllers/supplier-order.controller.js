@@ -28,8 +28,33 @@ const createSupplierOrder = async (req, res, next) => {
   }
 };
 
+const updateSupplierOrderById = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const order = await supplierOrderService.updateSupplierOrderById(
+      id,
+      req.body
+    );
+    res.json(order);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deleteSupplierOrderById = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const order = await supplierOrderService.deleteSupplierOrderById(id);
+    res.json(order);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getAllSupplierOrders,
   getSupplierOrderById,
   createSupplierOrder,
+  updateSupplierOrderById,
+  deleteSupplierOrderById,
 };
