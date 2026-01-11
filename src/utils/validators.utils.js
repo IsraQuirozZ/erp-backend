@@ -1,4 +1,3 @@
-const { parse } = require("dotenv");
 const { decimalRegex, onlyLettersRegex } = require("./regex.utils");
 const { CapitalizeFirstLetter, capitalize } = require("./string.utils");
 
