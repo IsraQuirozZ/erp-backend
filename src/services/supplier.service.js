@@ -26,6 +26,26 @@ const getSupplierById = async (id) => {
   return supplier;
 };
 
+// getProductsBySupplierId
+const getProductsBySupplierId = async (id) => {
+  const supplier = await prisma.supplier.findUnique({
+    where: { id_supplier: id },
+  });
+
+  if (!supplier) {
+    throw {
+      status: 400,
+      message: "Supplier not found",
+    };
+  }
+
+  const products = await prisma.supplierProduct.findMany({
+    where: { id_supplier: id },
+  });
+
+  return products;
+};
+
 const createSupplier = async (data) => {
   try {
     const address = await prisma.address.findUnique({
@@ -133,6 +153,7 @@ const deleteSupplierById = async (id) => {
 module.exports = {
   getAllSuppliers,
   getSupplierById,
+  getProductsBySupplierId,
   createSupplier,
   updateSupplierById,
   deleteSupplierById,

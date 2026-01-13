@@ -8,8 +8,13 @@ const {
 
 // getAllOrders
 router.get("/", supplierOrderController.getAllSupplierOrders);
+
 // getAOrderbyId
 router.get("/:id", supplierOrderController.getSupplierOrderById);
+
+// getItemsBySupplierOrder
+router.get("/:id/items", supplierOrderController.getItemsBySupplierOrder);
+
 // createSupplierOrder
 router.post(
   "/",

@@ -26,6 +26,27 @@ const getSupplierOrderById = async (id) => {
   return order;
 };
 
+// getItemsBySupplierOrder
+const getItemsBySupplierOrder = async (orderId) => {
+  const order = await prisma.supplierOrder.findUnique({
+    where: { id_supplier_order: orderId },
+  });
+
+  if (!order) {
+    throw {
+      status: 400,
+      message: "Supplier Order not found",
+    };
+  }
+
+  //   `${item.supplier_product.name} ${item.unit_price} ${item.quantity} ${item.subtotal}`
+
+  return (items = await prisma.supplierOrderItem.findMany({
+    where: { id_supplier_order: orderId },
+    include: { supplier_product: true },
+  }));
+};
+
 const createSupplierOrder = async (data) => {
   const supplier = await prisma.supplier.findUnique({
     where: { id_supplier: data.id_supplier },
@@ -113,7 +134,19 @@ const deleteSupplierOrderById = async (id) => {
       message: "Supplier Order not found",
     };
   }
-  if (order.status === "PENDING") {
+
+  if (order.status === "PENDING" || order.status === "CANCELLED") {
+    const itemsCount = await prisma.supplierOrderItem.count({
+      where: { id_supplier_order: id },
+    });
+
+    if (itemsCount > 0) {
+      throw {
+        status: 400,
+        message: `Order --${order.id_supplier_order}-- cannot be deleted because it has associated items`,
+      };
+    }
+
     return await prisma.supplierOrder.update({
       where: { id_supplier_order: id },
       include: { supplier: true },
@@ -122,7 +155,7 @@ const deleteSupplierOrderById = async (id) => {
   } else {
     throw {
       status: 400,
-      message: `The Order cannot be deleted -status: ${order.status}-`,
+      message: `The Order --${order.id_supplier_order}-- cannot be deleted, status: ${order.status}`,
     };
   }
 };
@@ -130,6 +163,7 @@ const deleteSupplierOrderById = async (id) => {
 module.exports = {
   getAllSupplierOrders,
   getSupplierOrderById,
+  getItemsBySupplierOrder,
   createSupplierOrder,
   updateSupplierOrderById,
   deleteSupplierOrderById,

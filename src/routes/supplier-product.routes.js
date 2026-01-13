@@ -12,6 +12,8 @@ router.get("/", supplierProductController.getAllSupplierProducts);
 // getProductById
 router.get("/:id", supplierProductController.getSupplierProductById);
 
+// getProductsBySupplierId -> Handle in supplier
+
 // createSupplierProduct
 router.post(
   "/",

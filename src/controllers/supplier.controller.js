@@ -19,6 +19,17 @@ const getSupplier = async (req, res, next) => {
   }
 };
 
+//getproductsBySupplierId
+const getProductsBySupplierId = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const products = await supplierService.getProductsBySupplierId(id);
+    res.json(products);
+  } catch (error) {
+    next(error);
+  }
+};
+
 const createSupplier = async (req, res, next) => {
   try {
     const supplier = await supplierService.createSupplier(req.body);
@@ -54,6 +65,7 @@ const deleteSupplierById = async (req, res, next) => {
 module.exports = {
   getSuppliers,
   getSupplier,
+  getProductsBySupplierId,
   createSupplier,
   updateSupplierById,
   deleteSupplierById,

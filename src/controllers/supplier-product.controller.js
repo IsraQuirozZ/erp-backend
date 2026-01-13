@@ -18,6 +18,7 @@ const getSupplierProductById = async (req, res, next) => {
     next(error);
   }
 };
+
 const createSupplierProduct = async (req, res, next) => {
   try {
     const product = await supplierProductService.createSupplierProduct(
