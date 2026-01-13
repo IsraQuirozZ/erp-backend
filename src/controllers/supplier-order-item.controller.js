@@ -23,4 +23,34 @@ const createSupplierOrderItem = async (req, res, next) => {
   }
 };
 
-module.exports = { getSupplierOrderItemsById, createSupplierOrderItem };
+const updateSupplierOrderItemById = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const orderItem =
+      await supplierOrderItemService.updateSupplierOrderItemById(id, req.body);
+    res.json(orderItem);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deleteSupplierOrderitemById = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const orderItem = supplierOrderItemService.deleteSupplierOrderItemById(id);
+    res.json({
+      message: `Supplier Order Item --${
+        (await orderItem).id_supplier_order_item
+      }--  successfully deleted`,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  getSupplierOrderItemsById,
+  createSupplierOrderItem,
+  updateSupplierOrderItemById,
+  deleteSupplierOrderitemById,
+};

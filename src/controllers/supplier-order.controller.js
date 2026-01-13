@@ -58,7 +58,9 @@ const deleteSupplierOrderById = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     const order = await supplierOrderService.deleteSupplierOrderById(id);
-    res.json(order);
+    res.json({
+      message: `Supplier Order --${order.id_supplier_order}--  successfully deleted`,
+    });
   } catch (error) {
     next(error);
   }

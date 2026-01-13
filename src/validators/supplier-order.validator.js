@@ -53,7 +53,7 @@ const validateUpdateSupplierOrder = async (req, res, next) => {
 
   if (expected_delivery_date === undefined && status === undefined) {
     return res.status(400).json({
-      error: "At least one field must be provided ti update the order",
+      error: "At least one field must be provided to update the order",
     });
   }
 
