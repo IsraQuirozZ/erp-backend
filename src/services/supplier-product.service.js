@@ -76,11 +76,25 @@ const updateSupplierProductById = async (id, data) => {
       };
     }
 
-    return await prisma.supplierProduct.update({
+    const updatedProduct = await prisma.supplierProduct.update({
       where: { id_supplier_product: id },
       include: { supplier: true },
       data: data,
     });
+
+    const supplier = await prisma.supplier.findUnique({
+      where: { id_supplier: updatedProduct.id_supplier },
+    });
+
+    if (supplier.active !== true) {
+      throw {
+        status: 400,
+        message:
+          "The product can not be activated if {active : false} in supplier",
+      };
+    }
+
+    return updatedProduct;
   } catch (error) {
     if (error.code === "P2002") {
       throw {

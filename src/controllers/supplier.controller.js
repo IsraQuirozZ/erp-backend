@@ -19,12 +19,23 @@ const getSupplier = async (req, res, next) => {
   }
 };
 
-//getproductsBySupplierId
+// getproductsBySupplierId
 const getProductsBySupplierId = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     const products = await supplierService.getProductsBySupplierId(id);
     res.json(products);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// getOrdersBySupplierId
+const getOrdersBySupplierId = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const orders = await supplierService.getOrdersBySupplierId(id);
+    res.json(orders);
   } catch (error) {
     next(error);
   }
@@ -66,6 +77,7 @@ module.exports = {
   getSuppliers,
   getSupplier,
   getProductsBySupplierId,
+  getOrdersBySupplierId,
   createSupplier,
   updateSupplierById,
   deleteSupplierById,
