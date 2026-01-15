@@ -57,8 +57,8 @@ model Supplier {
   id_address    Int
   address       Address @relation(fields: [id_address], references: [id_address])
 
-  products SupplierProduct[]
-  supplierOrders SupplierOrder[]
+  supplierProducts  SupplierProduct[]
+  supplierOrders    SupplierOrder[]
 }
 
 model Department {
@@ -114,6 +114,7 @@ model SupplierProduct {
   supplier            Supplier @relation(fields: [id_supplier], references: [id_supplier])     
 
   supplierOrderItems  SupplierOrderItem[]
+  products            Product[]
   @@unique([id_supplier, name])      
 
   @@map("SUPPLIER_PRODUCT")
@@ -154,4 +155,17 @@ model SupplierOrderItem {
   supplier_product         SupplierProduct @relation(fields: [id_supplier_product],references: [id_supplier_product])
 
   @@unique ([id_supplier_order, id_supplier_product])
+}
+
+model Product {
+  id_product    Int @id @default(autoincrement())
+  name          String @db.VarChar(100)
+  price         Decimal @db.Decimal(10,2)
+  description   String? @db.VarChar(250)
+  active        Boolean @default(true)
+
+  id_supplier_product   Int
+  supplierProduct             SupplierProduct @relation(fields: [id_supplier_product], references: [id_supplier_product])
+
+  @@unique([name, id_supplier_product])
 }
