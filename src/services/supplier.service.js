@@ -74,6 +74,26 @@ const createSupplier = async (data) => {
   }
 };
 
+// getOrdersBySupplierId
+const getOrdersBySupplierId = async (id) => {
+  const supplier = await prisma.supplier.findUnique({
+    where: { id_supplier: id },
+  });
+
+  if (!supplier) {
+    throw {
+      status: 400,
+      message: "Supplier not found",
+    };
+  }
+
+  const orders = await prisma.supplierOrder.findMany({
+    where: { id_supplier: id },
+  });
+
+  return orders;
+};
+
 const updateSupplierById = async (id, data) => {
   try {
     const supplier = await prisma.supplier.findUnique({
@@ -118,7 +138,7 @@ const updateSupplierById = async (id, data) => {
 };
 
 // SOFT DELETE
-// RULE FOR THE FUTURE --> Can not be deleted if it has associated records (products, orders,payments, invoices... etc)
+// RULE FOR THE FUTURE --> Can not be deleted if it has associated records (orders,payments, invoices... etc)
 const deleteSupplierById = async (id) => {
   const supplier = await prisma.supplier.findUnique({
     where: { id_supplier: id },
@@ -143,6 +163,18 @@ const deleteSupplierById = async (id) => {
     };
   }
 
+  // If orders -> Don't delete
+  const countOrders = await prisma.supplierOrder.count({
+    where: { id_supplier: id },
+  });
+
+  if (countOrders > 0) {
+    throw {
+      status: 409,
+      message: "Supplier can not be deleted because it has associated orders",
+    };
+  }
+
   return await prisma.supplier.update({
     where: { id_supplier: id },
     include: { address: true },
@@ -154,6 +186,7 @@ module.exports = {
   getAllSuppliers,
   getSupplierById,
   getProductsBySupplierId,
+  getOrdersBySupplierId,
   createSupplier,
   updateSupplierById,
   deleteSupplierById,
