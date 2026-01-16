@@ -15,6 +15,7 @@ const validateCreateSupplierOrderitem = async (req, res, next) => {
   const { id_supplier_order, id_supplier_product, quantity } = req.body;
 
   // QUANTITY
+  // TODO: Manage Stock
   if (
     !quantity ||
     typeof quantity !== "string" ||
@@ -25,7 +26,6 @@ const validateCreateSupplierOrderitem = async (req, res, next) => {
       .json({ error: "Quantity must be a non-empty string" });
   }
 
-  // Future -> Manage Stock
   if (!onlyNumbersRegex.test(quantity.trim())) {
     return res.status(400).json({ error: "Quantity must contain only digits" });
   }

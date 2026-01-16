@@ -1,4 +1,8 @@
-const { decimalRegex, onlyLettersRegex } = require("./regex.utils");
+const {
+  decimalRegex,
+  onlyLettersRegex,
+  onlyNumbersRegex,
+} = require("./regex.utils");
 const { CapitalizeFirstLetter, capitalize } = require("./string.utils");
 
 const validateDecimalField = (value, fieldName, { required = true } = {}) => {
@@ -79,4 +83,42 @@ const validateStringField = (
     : CapitalizeFirstLetter(trimmedValue);
 };
 
-module.exports = { validateDecimalField, validateStringField };
+const validateIntField = (value, fieldName, { required = true } = {}) => {
+  if (value === undefined) {
+    if (required) {
+      throw {
+        status: 400,
+        message: `${fieldName} is required`,
+      };
+    }
+    return null;
+  }
+
+  if (typeof value !== "string" || value.trim().length === 0) {
+    throw {
+      status: 400,
+      message: `${fieldName} must be a non empty string`,
+    };
+  }
+
+  const trimmedValue = value.trim();
+
+  if (!onlyNumbersRegex.test(trimmedValue)) {
+    throw { status: 400, message: `${fieldName} must be a Int number` };
+  }
+
+  if (parseInt(trimmedValue) <= 0) {
+    throw {
+      status: 400,
+      message: `${fieldName} must be a positive number`,
+    };
+  }
+
+  return parseInt(trimmedValue);
+};
+
+module.exports = {
+  validateDecimalField,
+  validateStringField,
+  validateIntField,
+};

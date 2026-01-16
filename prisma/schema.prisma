@@ -32,6 +32,7 @@ model Address {
   clients       Client[]
   suppliers     Supplier[]
   employees     Employee[]
+  warehouses    Warehouse[]
 }
 
 model Client {
@@ -168,4 +169,24 @@ model Product {
   supplierProduct             SupplierProduct @relation(fields: [id_supplier_product], references: [id_supplier_product])
 
   @@unique([name, id_supplier_product])
+}
+
+enum WarehouseType {
+  MAIN
+  SECONDARY
+  DISTRIBUTION
+  STORE
+}
+
+model Warehouse {
+  id_warehouse    Int @id @default(autoincrement())
+  name            String @db.VarChar(100)
+  warehouse_type  WarehouseType @default(MAIN)
+  capacity        Int
+  active          Boolean @default(true)
+
+  id_address      Int
+  address         Address @relation(fields: [id_address], references: [id_address])
+
+  @@unique([id_address, name])
 }

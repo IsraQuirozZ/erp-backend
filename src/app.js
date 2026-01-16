@@ -10,6 +10,7 @@ const supplierProductRoutes = require("./routes/supplier-product.routes");
 const supplierOrderRoutes = require("./routes/supplier-order.routes");
 const supplierOrderItemRoutes = require("./routes/supplier-order-item.routes");
 const productRoutes = require("./routes/product.routes");
+const warehouseRoutes = require("./routes/warehouse.routes");
 const errorMiddleware = require("./middlewares/error.middleware");
 
 const app = express();
@@ -27,6 +28,7 @@ app.use("/api/supplier-products", supplierProductRoutes);
 app.use("/api/supplier-orders", supplierOrderRoutes);
 app.use("/api/supplier-order-items", supplierOrderItemRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/warehouses", warehouseRoutes);
 
 // Middleware global de errores (SIEMPRE EL ÚLTIMO)
 app.use(errorMiddleware);

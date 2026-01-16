@@ -37,7 +37,7 @@ const validateCreateProduct = async (req, res, next) => {
   if (!id_supplier_product || typeof id_supplier_product !== "number") {
     return res
       .status(400)
-      .json({ error: "Supplier ID si required and must be a number" });
+      .json({ error: "Supplier ID is required and must be a number" });
   }
 
   // NORMALIZE
