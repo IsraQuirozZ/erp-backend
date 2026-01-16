@@ -118,6 +118,8 @@ model SupplierProduct {
   products            Product[]
   @@unique([id_supplier, name])      
 
+  inventories         SupplierProductInventory[]
+
   @@map("SUPPLIER_PRODUCT")
 }
 
@@ -189,4 +191,22 @@ model Warehouse {
   address         Address @relation(fields: [id_address], references: [id_address])
 
   @@unique([id_address, name])
+
+  supplierProductInventories SupplierProductInventory[]
+}
+
+model SupplierProductInventory {
+  current_stock   Int 
+  max_stock       Int
+  min_stock       Int
+  last_updated    DateTime @updatedAt
+  active          Boolean @default(true)
+
+  id_supplier_product Int
+  supplierProduct     SupplierProduct @relation(fields: [id_supplier_product], references: [id_supplier_product])
+
+  id_warehouse        Int
+  warehouse           Warehouse @relation(fields: [id_warehouse], references: [id_warehouse])
+
+  @@id([id_supplier_product, id_warehouse])
 }
