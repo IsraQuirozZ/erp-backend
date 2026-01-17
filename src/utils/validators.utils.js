@@ -107,11 +107,20 @@ const validateIntField = (value, fieldName, { required = true } = {}) => {
     throw { status: 400, message: `${fieldName} must be a Int number` };
   }
 
-  if (parseInt(trimmedValue) <= 0) {
-    throw {
-      status: 400,
-      message: `${fieldName} must be a positive number`,
-    };
+  if (fieldName.includes("Stock")) {
+    if (parseInt(trimmedValue) < 0) {
+      throw {
+        status: 400,
+        message: `${fieldName} must be a 0 or positive number`,
+      };
+    }
+  } else {
+    if (parseInt(trimmedValue) <= 0) {
+      throw {
+        status: 400,
+        message: `${fieldName} must be a positive number`,
+      };
+    }
   }
 
   return parseInt(trimmedValue);
