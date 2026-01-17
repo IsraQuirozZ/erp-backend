@@ -196,6 +196,7 @@ model Warehouse {
 
   supplierProductInventories SupplierProductInventory[]
   productInventories         ProductInventory[]
+  shipments                  Shipment[]
 }
 
 model SupplierProductInventory {
@@ -228,4 +229,24 @@ model ProductInventory {
   warehouse           Warehouse @relation(fields: [id_warehouse], references: [id_warehouse])
 
   @@id([id_product, id_warehouse])
+}
+
+enum ShipmentStatus {
+  PENDING
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+model Shipment {
+  id_shipment               Int @id @default(autoincrement())
+  shipping_company          String @db.VarChar(100)
+  shipping_cost             Decimal @db.Decimal(10,2)
+  status                    ShipmentStatus @default(PENDING)
+  shipment_date             DateTime?
+  estimated_delivery_date   DateTime?
+  actual_delivery_date      DateTime?
+
+  id_warehouse              Int
+  warehouse                 Warehouse @relation(fields: [id_warehouse], references: [id_warehouse])
 }
