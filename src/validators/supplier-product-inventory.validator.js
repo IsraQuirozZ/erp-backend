@@ -7,7 +7,6 @@ const validateCreateSupplierproductInventory = async (req, res, next) => {
     current_stock,
     max_stock,
     min_stock,
-    last_updated,
     active,
   } = req.body;
 
@@ -29,6 +28,15 @@ const validateCreateSupplierproductInventory = async (req, res, next) => {
 
     // MIN_STOCK
     req.body.min_stock = validateIntField(min_stock, "MIN Stock");
+
+    // ACTIVE (OPTIONAL, DEFAULT TRUE)
+    if (active !== undefined && typeof active !== "boolean") {
+      return res.status(400).json({ error: "Active must be a boolean value" });
+    }
+
+    if (active === undefined) {
+      req.body.active = true;
+    }
 
     // BASIC COHERENCE
     if (req.body.min_stock > req.body.max_stock) {
@@ -52,4 +60,74 @@ const validateCreateSupplierproductInventory = async (req, res, next) => {
   next();
 };
 
-module.exports = { validateCreateSupplierproductInventory };
+const validateUpdateSupplierproductInventory = async (req, res, next) => {
+  if (
+    req.body.id_supplier_product !== undefined ||
+    req.body.id_warehouse !== undefined
+  ) {
+    return res.status(400).json({
+      error: "The id of the Supplier Product Inventory cannot be updated",
+    });
+  }
+
+  if (
+    req.body.current_stock !== undefined ||
+    req.body.last_updated !== undefined
+  ) {
+    return res.status(400).json({
+      error: "Some fields are managed automatically by the system",
+    });
+  }
+
+  const { max_stock, min_stock, active } = req.body;
+
+  if (
+    max_stock === undefined &&
+    min_stock === undefined &&
+    active === undefined
+  ) {
+    return res.status(400).json({
+      error: "At least one field must be provided to update the inevtory",
+    });
+  }
+
+  try {
+    // MAX_STOCK
+    if (max_stock !== undefined) {
+      req.body.max_stock = validateIntField(max_stock, "Max Stock");
+    }
+
+    // MIN_STOCK
+    if (min_stock !== undefined) {
+      req.body.min_stock = validateIntField(min_stock, "Min Stock");
+    }
+  } catch (error) {
+    return next(error);
+  }
+
+  // BASIC COHERENCE
+  if (
+    req.body.min_stock !== undefined &&
+    req.body.max_stock !== undefined &&
+    req.body.min_stock > req.body.max_stock
+  ) {
+    return res
+      .status(400)
+      .json({ error: "Min stock cannot be greater than max stock" });
+  }
+
+  // ACTIVE
+  if (active !== undefined && typeof active !== "boolean") {
+    return res.status(400).json({ error: "Active must be a boolean value" });
+  }
+
+  if (active === false) {
+    return res.status(400).json({ error: "Active cannot be updated to false" });
+  }
+  next();
+};
+
+module.exports = {
+  validateCreateSupplierproductInventory,
+  validateUpdateSupplierproductInventory,
+};

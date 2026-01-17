@@ -38,8 +38,42 @@ const createSupplierProductInventory = async (req, res, next) => {
   }
 };
 
+const updateInventory = async (req, res, next) => {
+  try {
+    const id_supplier_product = Number(req.params.id_supplier_product);
+    const id_warehouse = Number(req.params.id_warehouse);
+    const inventory = await supplierProductInventoryService.updateInventory(
+      id_supplier_product,
+      id_warehouse,
+      req.body
+    );
+
+    res.json(inventory);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deleteInventory = async (req, res, next) => {
+  try {
+    const id_supplier_product = Number(req.params.id_supplier_product);
+    const id_warehouse = Number(req.params.id_warehouse);
+    const inventory = await supplierProductInventoryService.deleteInventory(
+      id_supplier_product,
+      id_warehouse
+    );
+    res.json({
+      message: `Inventory -- (${id_supplier_product}, ${id_warehouse}) -- successfully deleted`,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getAllInventories,
   getInventory,
   createSupplierProductInventory,
+  updateInventory,
+  deleteInventory,
 };
