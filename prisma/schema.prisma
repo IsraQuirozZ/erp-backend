@@ -168,9 +168,11 @@ model Product {
   active        Boolean @default(true)
 
   id_supplier_product   Int
-  supplierProduct             SupplierProduct @relation(fields: [id_supplier_product], references: [id_supplier_product])
+  supplierProduct       SupplierProduct @relation(fields: [id_supplier_product], references: [id_supplier_product])
 
   @@unique([name, id_supplier_product])
+
+  inventories         ProductInventory[]
 }
 
 enum WarehouseType {
@@ -193,6 +195,7 @@ model Warehouse {
   @@unique([id_address, name])
 
   supplierProductInventories SupplierProductInventory[]
+  productInventories         ProductInventory[]
 }
 
 model SupplierProductInventory {
@@ -209,4 +212,20 @@ model SupplierProductInventory {
   warehouse           Warehouse @relation(fields: [id_warehouse], references: [id_warehouse])
 
   @@id([id_supplier_product, id_warehouse])
+}
+
+model ProductInventory {
+  current_stock   Int 
+  max_stock       Int
+  min_stock       Int
+  last_updated    DateTime @updatedAt
+  active          Boolean @default(true)
+
+  id_product  Int
+  product     Product @relation(fields: [id_product], references: [id_product])
+
+  id_warehouse        Int
+  warehouse           Warehouse @relation(fields: [id_warehouse], references: [id_warehouse])
+
+  @@id([id_product, id_warehouse])
 }

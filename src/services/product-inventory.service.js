@@ -1,43 +1,43 @@
 const prisma = require("../config/prisma");
 
 const getAllInventories = async () => {
-  return await prisma.supplierProductInventory.findMany({
+  return await prisma.productInventory.findMany({
     where: { active: true },
-    include: { supplierProduct: true, warehouse: true },
+    include: { product: true, warehouse: true },
   });
 };
 
-// PK composed of id_supplier_product && id_warehouse
-const getInventory = async (id_supplier_product, id_warehouse) => {
-  const inventory = await prisma.supplierProductInventory.findUnique({
+// PK composed of id_product && id_warehouse
+const getInventory = async (id_product, id_warehouse) => {
+  const inventory = await prisma.productInventory.findUnique({
     where: {
-      id_supplier_product_id_warehouse: { id_supplier_product, id_warehouse },
+      id_product_id_warehouse: { id_product, id_warehouse },
     },
-    include: { supplierProduct: true, warehouse: true },
+    include: { product: true, warehouse: true },
   });
 
   if (!inventory) {
     throw {
       status: 404,
-      message: "Supplier Product Inventory not found",
+      message: "Product Inventory not found",
     };
   }
 
   return inventory;
 };
 
-const createSupplierProductInventory = async (data) => {
+const createInventory = async (data) => {
   try {
-    const supplierProduct = await prisma.supplierProduct.findUnique({
+    const product = await prisma.product.findUnique({
       where: {
-        id_supplier_product: data.id_supplier_product,
+        id_product: data.id_product,
       },
     });
 
-    if (!supplierProduct || !supplierProduct.active) {
+    if (!product || !product.active) {
       throw {
         status: 400,
-        message: "Supplier Product not found",
+        message: "Product not found or inactive",
       };
     }
 
@@ -48,14 +48,14 @@ const createSupplierProductInventory = async (data) => {
     if (!warehouse || !warehouse.active) {
       throw {
         status: 400,
-        message: "Warehouse not found",
+        message: "Warehouse not found or inactive",
       };
     }
 
-    return await prisma.supplierProductInventory.create({
+    return await prisma.productInventory.create({
       data,
       include: {
-        supplierProduct: true,
+        product: true,
         warehouse: true,
       },
     });
@@ -71,25 +71,25 @@ const createSupplierProductInventory = async (data) => {
   }
 };
 
-const updateInventory = async (id_supplier_product, id_warehouse, data) => {
-  const inventory = await prisma.supplierProductInventory.findUnique({
+const updateInventory = async (id_product, id_warehouse, data) => {
+  const inventory = await prisma.productInventory.findUnique({
     where: {
-      id_supplier_product_id_warehouse: { id_supplier_product, id_warehouse },
+      id_product_id_warehouse: { id_product, id_warehouse },
     },
-    include: { supplierProduct: true, warehouse: true },
+    include: { product: true, warehouse: true },
   });
 
   if (!inventory) {
     throw {
       status: 404,
-      message: "Supplier Product Inventory not found",
+      message: "Product Inventory not found",
     };
   }
 
   if (!inventory.active && data.active !== true) {
     throw {
       status: 400,
-      message: "Inactive Supplier Product Inventory can only be reactivated",
+      message: "Inactive Product Inventory can only be reactivated",
     };
   }
 
@@ -124,34 +124,34 @@ const updateInventory = async (id_supplier_product, id_warehouse, data) => {
   }
 
   // TODO: if reactivated -> current_stock = 0
-  return await prisma.supplierProductInventory.update({
+  return await prisma.productInventory.update({
     where: {
-      id_supplier_product_id_warehouse: { id_supplier_product, id_warehouse },
+      id_product_id_warehouse: { id_product, id_warehouse },
     },
     data,
-    include: { supplierProduct: true, warehouse: true },
+    include: { product: true, warehouse: true },
   });
 };
 
 // TODO: If it has supplierOrders "PENDING" or "CONFIRMED" -> Don't delete
-const deleteInventory = async (id_supplier_product, id_warehouse) => {
-  const inventory = await prisma.supplierProductInventory.findUnique({
+const deleteInventory = async (id_product, id_warehouse) => {
+  const inventory = await prisma.productInventory.findUnique({
     where: {
-      id_supplier_product_id_warehouse: { id_supplier_product, id_warehouse },
+      id_product_id_warehouse: { id_product, id_warehouse },
     },
   });
 
   if (!inventory) {
     throw {
       status: 404,
-      message: "Supplier Product Inventory not found",
+      message: "Product Inventory not found",
     };
   }
 
   if (!inventory.active) {
     throw {
       status: 400,
-      message: "Supplier Product Inventory is already inactive",
+      message: "Product Inventory is already inactive",
     };
   }
 
@@ -162,9 +162,9 @@ const deleteInventory = async (id_supplier_product, id_warehouse) => {
     };
   }
 
-  return await prisma.supplierProductInventory.update({
+  return await prisma.productInventory.update({
     where: {
-      id_supplier_product_id_warehouse: { id_supplier_product, id_warehouse },
+      id_product_id_warehouse: { id_product, id_warehouse },
     },
     data: { active: false },
   });
@@ -173,7 +173,7 @@ const deleteInventory = async (id_supplier_product, id_warehouse) => {
 module.exports = {
   getAllInventories,
   getInventory,
-  createSupplierProductInventory,
+  createInventory,
   updateInventory,
   deleteInventory,
 };

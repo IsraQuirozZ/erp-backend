@@ -1,8 +1,8 @@
 const { validateIntField } = require("../utils/validators.utils");
 
-const validateCreateSupplierProductInventory = async (req, res, next) => {
+const validateCreateProductInventory = async (req, res, next) => {
   const {
-    id_supplier_product,
+    id_product,
     id_warehouse,
     current_stock,
     max_stock,
@@ -11,11 +11,8 @@ const validateCreateSupplierProductInventory = async (req, res, next) => {
   } = req.body;
 
   try {
-    // ID_SUPPLIER_PRODUCT
-    req.body.id_supplier_product = validateIntField(
-      id_supplier_product,
-      "Supplier Product ID"
-    );
+    // ID_PRODUCT
+    req.body.id_product = validateIntField(id_product, "Product ID");
 
     // ID_WAREHOUSE
     req.body.id_warehouse = validateIntField(id_warehouse, "Warehouse ID");
@@ -60,13 +57,13 @@ const validateCreateSupplierProductInventory = async (req, res, next) => {
   next();
 };
 
-const validateUpdateSupplierProductInventory = async (req, res, next) => {
+const validateUpdateProductInventory = async (req, res, next) => {
   if (
-    req.body.id_supplier_product !== undefined ||
+    req.body.id_product !== undefined ||
     req.body.id_warehouse !== undefined
   ) {
     return res.status(400).json({
-      error: "The id of the Supplier Product Inventory cannot be updated",
+      error: "Product Inventory ID cannot be updated",
     });
   }
 
@@ -128,6 +125,6 @@ const validateUpdateSupplierProductInventory = async (req, res, next) => {
 };
 
 module.exports = {
-  validateCreateSupplierProductInventory,
-  validateUpdateSupplierProductInventory,
+  validateCreateProductInventory,
+  validateUpdateProductInventory,
 };

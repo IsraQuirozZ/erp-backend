@@ -63,7 +63,7 @@ const deleteInventory = async (req, res, next) => {
       id_warehouse
     );
     res.json({
-      message: `Inventory -- (${id_supplier_product}, ${id_warehouse}) -- successfully deleted`,
+      message: `Inventory -- (${inventory.id_supplier_product}, ${inventory.id_warehouse}) -- successfully deleted`,
     });
   } catch (error) {
     next(error);

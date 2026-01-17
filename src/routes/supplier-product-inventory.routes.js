@@ -2,8 +2,8 @@ const express = require("express");
 const router = express.Router();
 const supplierProductInventoryController = require("../controllers/supplier-product-inventory.controller");
 const {
-  validateCreateSupplierproductInventory,
-  validateUpdateSupplierproductInventory,
+  validateCreateSupplierProductInventory,
+  validateUpdateSupplierProductInventory,
 } = require("../validators/supplier-product-inventory.validator");
 
 // getAllSupplierProductInventories
@@ -22,14 +22,14 @@ router.get(
 // createSupplierProductInventory
 router.post(
   "/",
-  validateCreateSupplierproductInventory,
+  validateCreateSupplierProductInventory,
   supplierProductInventoryController.createSupplierProductInventory
 );
 
 // updateSupplierProductInventory
 router.put(
   "/supplier-product/:id_supplier_product/warehouse/:id_warehouse",
-  validateUpdateSupplierproductInventory,
+  validateUpdateSupplierProductInventory,
   supplierProductInventoryController.updateInventory
 );
 
