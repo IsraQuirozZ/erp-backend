@@ -58,6 +58,7 @@ const createSupplierOrder = async (data) => {
       message: "The supplier provided does not exist",
     };
   }
+
   return await prisma.supplierOrder.create({
     data: {
       id_supplier: data.id_supplier,
