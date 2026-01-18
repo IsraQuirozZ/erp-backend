@@ -136,7 +136,7 @@ const deleteSupplierOrderById = async (id) => {
     };
   }
 
-  if (order.status === "PENDING" || order.status === "CANCELLED") {
+  if (order.status === "PENDING" || order.status === "CONFIRMED") {
     const itemsCount = await prisma.supplierOrderItem.count({
       where: { id_supplier_order: id },
     });

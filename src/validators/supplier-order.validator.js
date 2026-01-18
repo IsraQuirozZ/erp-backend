@@ -1,4 +1,4 @@
-const { SupplierOrderStatus } = require("@prisma/client");
+const { OrderStatus } = require("@prisma/client");
 
 const validateCreateSupplierOrder = async (req, res, next) => {
   if (req.body.id_supplier_order !== undefined) {
@@ -91,7 +91,7 @@ const validateUpdateSupplierOrder = async (req, res, next) => {
 
     const normalizedStatus = status.trim().toUpperCase();
 
-    if (!Object.values(SupplierOrderStatus).includes(normalizedStatus)) {
+    if (!Object.values(OrderStatus).includes(normalizedStatus)) {
       return res.status(400).json({ error: "Invalid supplier order status" });
     }
     req.body.status = normalizedStatus;
