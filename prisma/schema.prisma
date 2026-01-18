@@ -46,6 +46,8 @@ model Client {
 
   id_address Int
   address   Address @relation(fields: [id_address], references: [id_address])
+
+  clientOrders  ClientOrder[]
 }
 
 model Supplier {
@@ -123,7 +125,7 @@ model SupplierProduct {
   @@map("SUPPLIER_PRODUCT")
 }
 
-enum SupplierOrderStatus {
+enum OrderStatus {
   PENDING
   CONFIRMED
   RECEIVED
@@ -135,7 +137,7 @@ model SupplierOrder {
   created_at              DateTime @default(now())
   updated_at              DateTime @updatedAt
   expected_delivery_date  DateTime?
-  status                  SupplierOrderStatus @default(PENDING)
+  status                  OrderStatus @default(PENDING)
   total                   Decimal @db.Decimal(10,2) @default(0)
   active                  Boolean @default(true)
 
@@ -173,6 +175,7 @@ model Product {
   @@unique([name, id_supplier_product])
 
   inventories         ProductInventory[]
+  clientOrderItems    ClientOrderItem[]
 }
 
 enum WarehouseType {
@@ -249,4 +252,38 @@ model Shipment {
 
   id_warehouse              Int
   warehouse                 Warehouse @relation(fields: [id_warehouse], references: [id_warehouse])
+
+  clientOrders              ClientOrder[]
+}
+
+model ClientOrder {
+  id_client_order         Int @id @default(autoincrement())
+  created_at              DateTime @default(now())
+  updated_at              DateTime @updatedAt
+  expected_delivery_date  DateTime?
+  status                  OrderStatus @default(PENDING)
+  total                   Decimal @db.Decimal(10,2) @default(0)
+
+  id_client       Int
+  client          Client @relation(fields: [id_client], references: [id_client])
+
+  id_shipment     Int?
+  shipment        Shipment? @relation(fields: [id_shipment], references: [id_shipment])
+
+  items           ClientOrderItem[]
+}
+
+model ClientOrderItem {
+  id_client_order_item    Int @id @default(autoincrement())
+  quantity                Int
+  unit_price              Decimal @db.Decimal(10,2)
+  subtotal                Decimal @db.Decimal(10,2)
+
+  id_client_order        Int
+  client_order           ClientOrder @relation(fields: [id_client_order], references: [id_client_order])
+
+  id_product      Int
+  product                Product @relation(fields: [id_product], references: [id_product])
+
+  @@unique ([id_client_order, id_product])
 }
