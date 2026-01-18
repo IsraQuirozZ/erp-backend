@@ -28,4 +28,32 @@ const createShipment = async (req, res, next) => {
   }
 };
 
-module.exports = { getAllShipments, getShipmentById, createShipment };
+const updateShipmentById = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const shipment = await shipmentService.updateShipmentById(id, req.body);
+    res.json(shipment);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deleteShipmentById = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const shipment = shipmentService.deleteShipmentById(id);
+    res.json({
+      message: `Shipment - ${(await shipment).id_shipment} - successfully deleted`,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  getAllShipments,
+  getShipmentById,
+  createShipment,
+  updateShipmentById,
+  deleteShipmentById,
+};

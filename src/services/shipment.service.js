@@ -63,12 +63,101 @@ const createShipment = async (data) => {
   });
 };
 
-// RECEIVED -> Update (status: DELIVERED)
-// CANCELLED -> Updated (status: CANCELLED)
+// ORDER RECEIVED -> Update (status: DELIVERED)
+// ORDER CANCELLED -> Updated (status: CANCELLED)
+const updateShipmentById = async (id, data) => {
+  const shipment = await prisma.shipment.findUnique({
+    where: { id_shipment: id },
+  });
+
+  if (!shipment) {
+    throw {
+      status: 404,
+      message: "Shipment not found",
+    };
+  }
+
+  if (shipment.status === "DELIVERED" || shipment.status === "CANCELLED") {
+    throw {
+      status: 400,
+      message: `No updates allowed, shipment status: ${shipment.status}`,
+    };
+  }
+
+  // Status transition rules
+  if (data.status) {
+    const validTransitions = {
+      PENDING: ["IN_TRANSIT", "CANCELLED"],
+      IN_TRANSIT: ["DELIVERED"],
+      DELIVERED: [],
+      CANCELLED: [],
+    };
+
+    const allowed = validTransitions[shipment.status] || [];
+
+    if (!allowed.includes(data.status)) {
+      throw {
+        status: 400,
+        message: `Cannot change status from ${shipment.status} to ${data.status}`,
+      };
+    }
+  }
+
+  let shipmentDate = null;
+  let actualDeliveryDate = null;
+
+  if (data.status === "IN_TRANSIT") {
+    shipmentDate = shipment.shipment_date ?? new Date();
+  }
+
+  if (data.status === "DELIVERED") {
+    shipmentDate = shipment.shipment_date;
+    actualDeliveryDate = new Date();
+  }
+
+  return await prisma.shipment.update({
+    where: { id_shipment: id },
+    data: {
+      status: data.status,
+      shipment_date: shipmentDate,
+      actual_delivery_date: actualDeliveryDate,
+    },
+    include: { warehouse: true },
+  });
+};
+
+// Just when order status: confirmed -> Cancelled
+const deleteShipmentById = async (id) => {
+  const shipment = await prisma.shipment.findUnique({
+    where: { id_shipment: id },
+  });
+
+  if (!shipment) {
+    throw {
+      status: 404,
+      message: "Shipment not found",
+    };
+  }
+
+  // && Just when order status is cancelled
+  if (shipment.status !== "PENDING") {
+    throw {
+      status: 400,
+      message: `A Shipment ${shipment.status} cannot be deleted`,
+    };
+  }
+
+  return await prisma.shipment.delete({
+    where: { id_shipment: id },
+    include: { warehouse: true },
+  });
+};
 
 module.exports = {
   getAllShipments,
   getShipmentsByStatus,
   getShipmentById,
   createShipment,
+  updateShipmentById,
+  deleteShipmentById,
 };
