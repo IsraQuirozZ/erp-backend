@@ -20,11 +20,10 @@ const getClientOrderById = async (req, res, next) => {
 };
 
 // getItemsBySupplierOrder
-const getItemsBySupplierOrder = async (req, res, next) => {
+const getItemsByClientOrder = async (req, res, next) => {
   try {
     const orderId = Number(req.params.id);
-    const orderItems =
-      await clientOrderService.getItemsBySupplierOrder(orderId);
+    const orderItems = await clientOrderService.getItemsByClientOrder(orderId);
     res.json(orderItems);
   } catch (error) {
     next(error);
@@ -65,7 +64,7 @@ const cancelClientOrderById = async (req, res, next) => {
 module.exports = {
   getAllClientOrders,
   getClientOrderById,
-  //   getItemsBySupplierOrder,
+  getItemsByClientOrder,
   createClientOrder,
   updateClientOrderById,
   cancelClientOrderById,

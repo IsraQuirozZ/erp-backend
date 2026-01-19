@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE `SUPPLIER_PRODUCT` MODIFY `description` VARCHAR(250) NULL;

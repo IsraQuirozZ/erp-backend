@@ -83,7 +83,7 @@ const createSupplierOrderItem = async (data) => {
   }
 };
 
-// Actualizar si se actualizan los productos
+// Update if Products are updated && Order: PENDING
 const updateSupplierOrderItemById = async (id, data) => {
   const orderItem = await prisma.supplierOrderItem.findUnique({
     where: { id_supplier_order_item: id },
@@ -144,7 +144,7 @@ const deleteSupplierOrderItemById = async (id) => {
     };
   }
 
-  // ORDER STATUS !== PENDING -> Can't update
+  // ORDER STATUS !== PENDING -> Can't delete
   if (orderItem.supplier_order.status !== "PENDING") {
     throw {
       status: 409,

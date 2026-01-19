@@ -26,25 +26,25 @@ const getClientOrderById = async (id) => {
 };
 
 // getItemsByClientOrder
-// const getItemsBySupplierOrder = async (orderId) => {
-//   const order = await prisma.clientOrder.findUnique({
-//     where: { id_client_order: orderId },
-//   });
+const getItemsByClientOrder = async (orderId) => {
+  const order = await prisma.clientOrder.findUnique({
+    where: { id_client_order: orderId },
+  });
 
-//   if (!order) {
-//     throw {
-//       status: 400,
-//       message: "Supplier Order not found",
-//     };
-//   }
+  if (!order) {
+    throw {
+      status: 404,
+      message: "Supplier Order not found",
+    };
+  }
 
-//   //   `${item.supplier_product.name} ${item.unit_price} ${item.quantity} ${item.subtotal}`
+  //  `${item.supplier_product.name} ${item.unit_price} ${item.quantity} ${item.subtotal}`
 
-//   return (items = await prisma.supplierOrderItem.findMany({
-//     where: { id_client_order: orderId },
-//     include: { supplier_product: true },
-//   }));
-// };
+  return (items = await prisma.clientOrderItem.findMany({
+    where: { id_client_order: orderId },
+    include: { product: true },
+  }));
+};
 
 const createClientOrder = async (data) => {
   const client = await prisma.client.findUnique({
@@ -168,16 +168,16 @@ const cancelClientOrderById = async (id) => {
   }
 
   if (order.status === "PENDING" || order.status === "CONFIRMED") {
-    // const itemsCount = await prisma.clientOrderItem.count({
-    //   where: { id_client_order: id },
-    // });
+    const itemsCount = await prisma.clientOrderItem.count({
+      where: { id_client_order: id },
+    });
 
-    // if (itemsCount > 0) {
-    //   throw {
-    //     status: 400,
-    //     message: `Order --${order.id_client_order}-- cannot be deleted because it has associated items`,
-    //   };
-    // }
+    if (itemsCount > 0) {
+      throw {
+        status: 400,
+        message: `Order --${order.id_client_order}-- cannot be deleted because it has associated items`,
+      };
+    }
 
     return await prisma.clientOrder.update({
       where: { id_client_order: id },
@@ -195,7 +195,7 @@ const cancelClientOrderById = async (id) => {
 module.exports = {
   getAllClientOrders,
   getClientOrderById,
-  //   getItemsBySupplierOrder,
+  getItemsByClientOrder,
   createClientOrder,
   updateClientOrderById,
   cancelClientOrderById,

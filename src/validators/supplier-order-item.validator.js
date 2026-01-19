@@ -57,6 +57,7 @@ const validateCreateSupplierOrderitem = async (req, res, next) => {
 };
 
 // Update just the field quantity
+// TODO: Update if Products are updated && Order: PENDING -> in productService
 const validateUpdateSupplierOrderItem = async (req, res, next) => {
   if (req.body.id_supplier_order_item !== undefined) {
     return res
@@ -71,7 +72,7 @@ const validateUpdateSupplierOrderItem = async (req, res, next) => {
     req.body.subtotal !== undefined
   ) {
     return res.status(400).json({
-      error: "Some fields are managed automatically by the system",
+      error: "Only quantity can be updated for order items",
     });
   }
 
@@ -83,27 +84,10 @@ const validateUpdateSupplierOrderItem = async (req, res, next) => {
     });
   }
 
-  if (quantity !== undefined) {
-    if (typeof quantity !== "string" || quantity.trim().length === 0) {
-      return res.status(400).json({
-        error: "Quantity must be a non-empty string",
-      });
-    }
-
-    if (!onlyNumbersRegex.test(quantity.trim())) {
-      return res
-        .status(400)
-        .json({ error: "Quantity must contain only digits" });
-    }
-
-    if (parseInt(quantity.trim()) <= 0) {
-      return res
-        .status(400)
-        .json({ error: "Quantity must be a positive number" });
-    }
-
-    // NORMALIZE
-    req.body.quantity = parseInt(quantity.trim());
+  try {
+    req.body.quantity = validateIntField(quantity, "Quantity");
+  } catch (error) {
+    return next(error);
   }
 
   next();
