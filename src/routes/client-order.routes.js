@@ -13,7 +13,7 @@ router.get("/", clientOrderController.getAllClientOrders);
 router.get("/:id", clientOrderController.getClientOrderById);
 
 // getItemsBySupplierOrder
-// router.get("/:id/items", clientOrderController.getItemsBySupplierOrder);
+router.get("/:id/items", clientOrderController.getItemsByClientOrder);
 
 // createSupplierOrder
 router.post(

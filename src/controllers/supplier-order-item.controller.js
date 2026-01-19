@@ -3,9 +3,8 @@ const supplierOrderItemService = require("../services/supplier-order-item.servic
 const getSupplierOrderItemsById = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
-    const orderItems = await supplierOrderItemService.getSupplierOrderItemsById(
-      id
-    );
+    const orderItems =
+      await supplierOrderItemService.getSupplierOrderItemsById(id);
     res.json(orderItems);
   } catch (error) {
     next(error);
@@ -15,7 +14,7 @@ const getSupplierOrderItemsById = async (req, res, next) => {
 const createSupplierOrderItem = async (req, res, next) => {
   try {
     const orderItem = await supplierOrderItemService.createSupplierOrderItem(
-      req.body
+      req.body,
     );
     res.json(orderItem);
   } catch (error) {
@@ -37,10 +36,11 @@ const updateSupplierOrderItemById = async (req, res, next) => {
 const deleteSupplierOrderitemById = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
-    const orderItem = supplierOrderItemService.deleteSupplierOrderItemById(id);
+    const orderItem =
+      await supplierOrderItemService.deleteSupplierOrderItemById(id);
     res.json({
       message: `Supplier Order Item --${
-        (await orderItem).id_supplier_order_item
+        orderItem.id_supplier_order_item
       }--  successfully deleted`,
     });
   } catch (error) {

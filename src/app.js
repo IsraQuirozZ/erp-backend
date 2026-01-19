@@ -15,6 +15,7 @@ const supplierProductInventoryRoutes = require("./routes/supplier-product-invent
 const productInventoryRoutes = require("./routes/product-inventory.routes");
 const shipmentRoutes = require("./routes/shipment.routes");
 const clientOrderRoutes = require("./routes/client-order.routes");
+const clientOrderItemRoutes = require("./routes/client-order-item.routes");
 const errorMiddleware = require("./middlewares/error.middleware");
 
 const app = express();
@@ -37,6 +38,7 @@ app.use("/api/supplier-product-inventories", supplierProductInventoryRoutes);
 app.use("/api/product-inventories", productInventoryRoutes);
 app.use("/api/shipments", shipmentRoutes);
 app.use("/api/client-orders", clientOrderRoutes);
+app.use("/api/client-order-items", clientOrderItemRoutes);
 
 // Middleware global de errores (SIEMPRE EL ÚLTIMO)
 app.use(errorMiddleware);

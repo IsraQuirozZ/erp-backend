@@ -274,7 +274,6 @@ model ClientOrder {
 }
 
 model ClientOrderItem {
-  id_client_order_item    Int @id @default(autoincrement())
   quantity                Int
   unit_price              Decimal @db.Decimal(10,2)
   subtotal                Decimal @db.Decimal(10,2)
@@ -285,5 +284,6 @@ model ClientOrderItem {
   id_product      Int
   product                Product @relation(fields: [id_product], references: [id_product])
 
-  @@unique ([id_client_order, id_product])
+  @@id([id_client_order, id_product])
+
 }
