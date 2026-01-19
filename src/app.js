@@ -1,3 +1,4 @@
+const cors = require("cors");
 const express = require("express");
 const provinceRoutes = require("./routes/province.routes");
 const AddressRoutes = require("./routes/address.routes");
@@ -21,6 +22,7 @@ const errorMiddleware = require("./middlewares/error.middleware");
 const app = express();
 
 app.use(express.json());
+app.use(cors());
 
 app.use("/api/provinces", provinceRoutes);
 app.use("/api/addresses", AddressRoutes);
