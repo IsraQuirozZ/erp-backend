@@ -21,9 +21,31 @@ const getDepartmentById = async (id) => {
   return department;
 };
 
-const createDepartment = async (data) => {
+const findDepartmentById = async (name) => {
+  const department = await prisma.department.findFirst({
+    where: { name },
+  });
+
+  if (!department) {
+    throw {
+      status: 404,
+      message: "Department not found",
+    };
+  }
+
+  return department;
+};
+
+// No throw error (use in creation of employees)
+const getDepartmentByName = async (name, tx = prisma) => {
+  return tx.department.findFirst({
+    where: { name },
+  });
+};
+
+const createDepartment = async (data, tx = prisma) => {
   try {
-    return await prisma.department.create({
+    return await tx.department.create({
       data,
     });
   } catch (error) {
@@ -99,6 +121,8 @@ const deleteDepartmentById = async (id) => {
 module.exports = {
   getAllDepartments,
   getDepartmentById,
+  findDepartmentById, // TODO: Add to routes
+  getDepartmentByName, // USE CASE
   createDepartment,
   updateDepartmentById,
   deleteDepartmentById,

@@ -29,23 +29,25 @@ const getAddressById = async (id) => {
   return address;
 };
 
-const createAddress = async (data) => {
-  const province = await prisma.province.findUnique({
-    where: { id_province: data.id_province },
-  });
+const createAddress = async (data, tx = prisma) => {
+  // We don't need this any more, not think just execute... in the createX.service, we made validations
 
-  if (!province) {
-    throw {
-      status: 400,
-      message: "Province not found",
-    };
-  }
+  // const province = await prisma.province.findUnique({
+  //   where: { id_province: data.id_province },
+  // });
 
-  return prisma.address.create({
+  // if (!province) {
+  //   throw {
+  //     status: 400,
+  //     message: "Province not found",
+  //   };
+  // }
+
+  return await tx.address.create({
+    data,
     include: {
       province: true,
     },
-    data,
   });
 };
 

@@ -28,6 +28,16 @@ const createEmployee = async (req, res, next) => {
   }
 };
 
+// USE CASE
+const createFullEmployee = async (req, res, next) => {
+  try {
+    const employee = await employeeService.createFullEmployee(req.body);
+    res.status(201).json(employee);
+  } catch (error) {
+    next(error);
+  }
+};
+
 const updateEmployeeById = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
@@ -54,6 +64,7 @@ module.exports = {
   getEmployees,
   getEmployeeById,
   createEmployee,
+  createFullEmployee, // USE CASE
   updateEmployeeById,
   deleteEmployeeById,
 };

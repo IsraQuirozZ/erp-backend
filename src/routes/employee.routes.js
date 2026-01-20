@@ -4,6 +4,7 @@ const employeeController = require("../controllers/employee.controller");
 const {
   validateCreateEmployee,
   validateUpdateEmployee,
+  validateCreateFullEmployee,
 } = require("../validators/employee.validator");
 
 // getAllEmployees
@@ -15,11 +16,19 @@ router.get("/:id", employeeController.getEmployeeById);
 // createEmployee
 router.post("/", validateCreateEmployee, employeeController.createEmployee);
 
+// createFullEmployee
+// USE CASE
+router.post(
+  "/full",
+  validateCreateFullEmployee,
+  employeeController.createFullEmployee,
+);
+
 // updateEmployeeById
 router.put(
   "/:id",
   validateUpdateEmployee,
-  employeeController.updateEmployeeById
+  employeeController.updateEmployeeById,
 );
 
 // deleteEmployeeById

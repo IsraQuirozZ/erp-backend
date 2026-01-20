@@ -225,7 +225,7 @@ const validateCreateFullClient = (req, res, next) => {
       { onlyLetters: true },
     );
 
-    // POSTAL
+    // POSTAL_CODE
     if (
       !address.postal_code ||
       typeof address.postal_code !== "string" ||
