@@ -1,10 +1,15 @@
 const prisma = require("../config/prisma");
+const { Prisma } = require("@prisma/client");
+const provinceService = require("../services/province.service");
+const addressService = require("../services/address.service");
+const departmentService = require("../services/department.service");
 
 const getAllEmployees = async () => {
   return await prisma.employee.findMany({
     where: { active: true },
-    orderBy: { firstName: "asc" },
-    // include: { address: true, department: true },
+    // orderBy: { firstName: "asc" },
+    orderBy: { id_employee: "asc" },
+    include: { address: { include: { province: true } }, department: true },
   });
 };
 
@@ -59,6 +64,68 @@ const createEmployee = async (data) => {
         message: "A employee with this email already exists",
       };
     }
+    throw error;
+  }
+};
+
+// USE CASE
+const createFullEmployee = async (data) => {
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const { employee, address, province, department } = data;
+
+      // PROVINCE --> provinceService
+      let existingProvince = await provinceService.getProvinceByName(
+        province.name,
+        tx,
+      );
+
+      if (!existingProvince) {
+        existingProvince = await provinceService.createProvince(province, tx);
+      }
+
+      // ADDRESS --> addresService
+      const newAddress = await addressService.createAddress(
+        { ...address, id_province: existingProvince.id_province },
+        tx,
+      );
+
+      // DEPARTMENT --> departmentService
+      let existingDepartment = await departmentService.getDepartmentByName(
+        department.name,
+        tx,
+      );
+
+      if (!existingDepartment) {
+        existingDepartment = await departmentService.createDepartment(
+          department,
+          tx,
+        );
+      }
+
+      // EMPLOYEE
+      const newEmployee = await tx.employee.create({
+        data: {
+          ...employee,
+          id_address: newAddress.id_address,
+          id_department: existingDepartment.id_department,
+        },
+        include: { address: true, department: true },
+      });
+
+      return newEmployee;
+    });
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      throw {
+        status: 400,
+        message: "Employee with this email already exists",
+      };
+    }
+
     throw error;
   }
 };
@@ -154,6 +221,7 @@ module.exports = {
   getAllEmployees,
   getEmployeeById,
   createEmployee,
+  createFullEmployee,
   updateEmployeeById,
   deleteEmployeeById,
 };

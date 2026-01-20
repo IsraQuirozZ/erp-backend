@@ -23,7 +23,7 @@ const getProvinceById = async (id) => {
   return province;
 };
 
-const getProvinceByName = async (name) => {
+const findProvinceById = async (name) => {
   const province = await prisma.province.findFirst({
     where: { name },
   });
@@ -38,9 +38,16 @@ const getProvinceByName = async (name) => {
   return province;
 };
 
-const createProvince = async (data) => {
+// No throw error (use in creation of clients, suppliers, employees and warehouses)
+const getProvinceByName = async (name, tx = prisma) => {
+  return await tx.province.findFirst({
+    where: { name },
+  });
+};
+
+const createProvince = async (data, tx = prisma) => {
   try {
-    return await prisma.province.create({
+    return tx.province.create({
       data,
     });
   } catch (error) {
@@ -119,7 +126,8 @@ const deleteProvince = async (id) => {
 module.exports = {
   getAllProvinces,
   getProvinceById,
-  getProvinceByName,
+  findProvinceById, // TODO: Add to routes
+  getProvinceByName, // USE CASE
   createProvince,
   updateProvince,
   deleteProvince,
