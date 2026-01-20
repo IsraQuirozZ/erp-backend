@@ -1,9 +1,12 @@
 const { phoneRegex, emailRegex } = require("../utils/regex.utils");
-const { validateStringField } = require("../utils/validators.utils");
+const {
+  validateStringField,
+  validateIntField,
+} = require("../utils/validators.utils");
 
 const validateCreateClient = (req, res, next) => {
-  if (req.body.id_client) {
-    return res.status(400).json({ error: "Client ID must be not provided" });
+  if (req.body.id_client !== undefined) {
+    return res.status(400).json({ error: "Client ID must not be provided" });
   }
 
   const { firstName, lastName, phone, email, id_address, active } = req.body;
@@ -22,7 +25,7 @@ const validateCreateClient = (req, res, next) => {
     return next(error);
   }
 
-  // phone
+  // PHONE
   if (!phone || typeof phone !== "string" || !phoneRegex.test(phone.trim())) {
     return res.status(400).json({
       error: "The phone number must have 9 digits",
@@ -41,7 +44,7 @@ const validateCreateClient = (req, res, next) => {
     return res.status(400).json({ error: "Active must be a boolean value" });
   }
 
-  // id_address
+  // ID_ADDRESS
   if (!id_address || typeof id_address !== "number") {
     return res.status(400).json({ error: "The address ID must be a number" });
   }
@@ -93,7 +96,7 @@ const validateUpdateClient = (req, res, next) => {
     return next(error);
   }
 
-  //  phone
+  //  PHONE
   if (phone !== undefined) {
     if (typeof phone !== "string" || !phoneRegex.test(phone.trim())) {
       return res.status(400).json({
@@ -127,7 +130,133 @@ const validateUpdateClient = (req, res, next) => {
   next();
 };
 
+// USE CASE
+const validateCreateFullClient = (req, res, next) => {
+  const { province, address, client } = req.body;
+
+  if (!province || !address || !client) {
+    return res
+      .status(400)
+      .json({ error: "Client, Address and Province are required" });
+  }
+
+  if (
+    province.id_province !== undefined ||
+    address.id_address !== undefined ||
+    client.id_client !== undefined
+  ) {
+    return res.status(400).json({
+      error: "ID's must not be provided",
+    });
+  }
+
+  try {
+    // CLIENT
+    // FIRSTNAME
+    client.firstName = validateStringField(client.firstName, "Name", {
+      onlyLetters: true,
+    });
+
+    // LASTNAME
+    client.lastName = validateStringField(client.lastName, "Last Name", {
+      onlyLetters: true,
+    });
+
+    // PHONE
+    if (
+      !client.phone ||
+      typeof client.phone !== "string" ||
+      !phoneRegex.test(client.phone.trim())
+    ) {
+      return res.status(400).json({
+        error: "The phone number must have 9 digits",
+      });
+    }
+
+    // EMAIL
+    if (
+      !client.email ||
+      typeof client.email !== "string" ||
+      !emailRegex.test(client.email.trim())
+    ) {
+      return res.status(400).json({
+        error: "Email must be a valid email address",
+      });
+    }
+
+    // ACTIVE
+    if (client.active !== undefined && typeof client.active !== "boolean") {
+      return res.status(400).json({ error: "Active must be a boolean value" });
+    }
+
+    // NORMALIZE
+    client.phone = client.phone.trim();
+    client.email = client.email.trim().toLowerCase();
+    if (client.active === undefined) {
+      client.active = true;
+    }
+
+    // -- ADDRESS --
+    // STREET
+    address.street = validateStringField(address.street, "Street");
+
+    // NUMBER
+    address.number = validateStringField(address.number, "St. Number");
+
+    // PORTAL -> OPTIONAL
+    address.portal = validateStringField(address.portal, "Portal", {
+      required: false,
+    });
+
+    // FLOOR -> OPTIONAL
+    address.floor = validateStringField(address.floor, "Floor", {
+      required: false,
+    });
+
+    // DOOR -> OPTIONAL
+    address.door = validateStringField(address.door, "Door", {
+      required: false,
+    });
+
+    // MUNICIPALITY
+    address.municipality = validateStringField(
+      address.municipality,
+      "Municipality",
+      { onlyLetters: true },
+    );
+
+    // POSTAL
+    if (
+      !address.postal_code ||
+      typeof address.postal_code !== "string" ||
+      address.postal_code.trim().length === 0
+    ) {
+      return res.status(400).json({
+        error: "The postal code must be a non-empty string",
+      });
+    }
+
+    if (!/^[0-9]{5}$/.test(address.postal_code.trim())) {
+      return res.status(400).json({
+        error: "The postal code must have 5 digits",
+      });
+    }
+
+    //  NORMALIZE
+    address.postal_code = address.postal_code.trim();
+
+    // POVINCE
+    province.name = validateStringField(province.name, "Name", {
+      onlyLetters: true,
+    });
+  } catch (error) {
+    return next(error);
+  }
+  next();
+};
+
 module.exports = {
   validateCreateClient,
   validateUpdateClient,
+  validateCreateFullClient,
 };

@@ -3,7 +3,7 @@ const { onlyLettersRegex, onlyNumbersRegex } = require("../utils/regex.utils");
 
 const validateCreateAddress = (req, res, next) => {
   if (req.body.id_address !== undefined) {
-    return res.status(400).json({ error: "Address ID must be not provided" });
+    return res.status(400).json({ error: "Address ID must not be provided" });
   }
 
   const {

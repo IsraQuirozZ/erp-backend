@@ -48,10 +48,10 @@ const validateDecimalField = (value, fieldName, { required = true } = {}) => {
 const validateStringField = (
   value,
   fieldName,
-  { required = true, onlyLetters = false, capitalizeFirst = false } = {}
+  { required = true, onlyLetters = false, capitalizeFirst = false } = {},
 ) => {
   // onlyletters just for names, last names... etc.
-  // capitalizeFirst: true if capitalize util
+  // capitalizeFirst: true if capitalize just the first
   if (value === undefined) {
     if (required) {
       throw {

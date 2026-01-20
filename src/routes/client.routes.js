@@ -4,11 +4,20 @@ const clientController = require("../controllers/client.controller");
 const {
   validateCreateClient,
   validateUpdateClient,
+  validateCreateFullClient,
 } = require("../validators/client.validator");
 
 router.get("/", clientController.getClients);
 router.get("/:id", clientController.getClient);
 router.post("/", validateCreateClient, clientController.createClient);
+
+// USE CASE
+router.post(
+  "/full",
+  validateCreateFullClient,
+  clientController.createFullClient,
+);
+
 router.put("/:id", validateUpdateClient, clientController.updateClient);
 router.delete("/:id", clientController.deleteClientById);
 

@@ -28,6 +28,16 @@ const createClient = async (req, res, next) => {
   }
 };
 
+// USE CASE
+const createFullClient = async (req, res, next) => {
+  try {
+    const client = await clientService.createFullClient(req.body);
+    res.status(201).json(client);
+  } catch (error) {
+    next(error);
+  }
+};
+
 const updateClient = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
@@ -54,6 +64,7 @@ module.exports = {
   getClients,
   getClient,
   createClient,
+  createFullClient, // USE CASE
   updateClient,
   deleteClientById,
 };
