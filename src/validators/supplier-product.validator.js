@@ -1,6 +1,7 @@
 const {
   validateDecimalField,
   validateStringField,
+  validateIntField,
 } = require("../utils/validators.utils");
 
 const validateCreateSupplierProduct = async (req, res, next) => {
@@ -19,7 +20,7 @@ const validateCreateSupplierProduct = async (req, res, next) => {
     // PURCHASE_PRICES
     req.body.purchase_price = validateDecimalField(
       purchase_price,
-      "Purchase Price"
+      "Purchase Price",
     );
 
     // DESCRIPTION -> OPTIONAL
@@ -27,6 +28,9 @@ const validateCreateSupplierProduct = async (req, res, next) => {
       required: false,
       capitalizeFirst: true,
     });
+
+    // ID_SUPPLIER
+    req.body.id_supplier = validateIntField(id_supplier, "Supplier ID");
   } catch (error) {
     return next(error);
   }
@@ -34,13 +38,6 @@ const validateCreateSupplierProduct = async (req, res, next) => {
   // ACTIVE (OPTIONAL, DEFAULT TRUE)
   if (active !== undefined && typeof active !== "boolean") {
     return res.status(400).json({ error: "Active must be a boolean value" });
-  }
-
-  // ID_SUPPLIER
-  if (!id_supplier || typeof id_supplier !== "number") {
-    return res
-      .status(400)
-      .json({ error: "Supplier ID si required and must be a number" });
   }
 
   // NORMALIZE
@@ -86,7 +83,7 @@ const validateUpdateSupplierProduct = async (req, res, next) => {
     if (purchase_price !== undefined) {
       req.body.purchase_price = validateDecimalField(
         purchase_price,
-        "Purchase Price"
+        "Purchase Price",
       );
     }
 
