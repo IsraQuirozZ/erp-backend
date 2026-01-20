@@ -4,6 +4,7 @@ const supplierController = require("../controllers/supplier.controller");
 const {
   validateCreateSupplier,
   validateUpdateSupplier,
+  validateCreateFullSupplier,
 } = require("../validators/supplier.validator");
 
 // getAllSuppliers
@@ -21,11 +22,18 @@ router.get("/:id/orders", supplierController.getOrdersBySupplierId);
 // create
 router.post("/", validateCreateSupplier, supplierController.createSupplier);
 
+// USE CASE
+router.post(
+  "/full",
+  validateCreateFullSupplier,
+  supplierController.createFullSupplier,
+);
+
 // update
 router.put(
   "/:id",
   validateUpdateSupplier,
-  supplierController.updateSupplierById
+  supplierController.updateSupplierById,
 );
 
 // delete -> softDelete

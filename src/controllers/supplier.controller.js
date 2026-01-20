@@ -50,6 +50,16 @@ const createSupplier = async (req, res, next) => {
   }
 };
 
+// USE CASE
+const createFullSupplier = async (req, res, next) => {
+  try {
+    const supplier = await supplierService.createFullSupplier(req.body);
+    res.status(201).json(supplier);
+  } catch (error) {
+    next(error);
+  }
+};
+
 const updateSupplierById = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
@@ -79,6 +89,7 @@ module.exports = {
   getProductsBySupplierId,
   getOrdersBySupplierId,
   createSupplier,
+  createFullSupplier, // USE CASE
   updateSupplierById,
   deleteSupplierById,
 };

@@ -1,4 +1,7 @@
 const prisma = require("../config/prisma");
+const { Prisma } = require("@prisma/client");
+const provinceService = require("../services/province.service");
+const addressService = require("../services/address.service");
 
 const getAllSuppliers = async () => {
   return prisma.supplier.findMany({
@@ -46,6 +49,26 @@ const getProductsBySupplierId = async (id) => {
   return products;
 };
 
+// getOrdersBySupplierId
+const getOrdersBySupplierId = async (id) => {
+  const supplier = await prisma.supplier.findUnique({
+    where: { id_supplier: id },
+  });
+
+  if (!supplier) {
+    throw {
+      status: 400,
+      message: "Supplier not found",
+    };
+  }
+
+  const orders = await prisma.supplierOrder.findMany({
+    where: { id_supplier: id },
+  });
+
+  return orders;
+};
+
 const createSupplier = async (data) => {
   try {
     const address = await prisma.address.findUnique({
@@ -74,24 +97,52 @@ const createSupplier = async (data) => {
   }
 };
 
-// getOrdersBySupplierId
-const getOrdersBySupplierId = async (id) => {
-  const supplier = await prisma.supplier.findUnique({
-    where: { id_supplier: id },
-  });
+// USE CASE
+const createFullSupplier = async (data) => {
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const { supplier, address, province } = data;
 
-  if (!supplier) {
-    throw {
-      status: 400,
-      message: "Supplier not found",
-    };
+      // PROVINCE --> provinceService
+      let existingProvince = await provinceService.getProvinceByName(
+        province.name,
+        tx,
+      );
+
+      if (!existingProvince) {
+        existingProvince = await provinceService.createProvince(province, tx);
+      }
+
+      // ADDRESS --> addresService
+      const newAddress = await addressService.createAddress(
+        { ...address, id_province: existingProvince.id_province },
+        tx,
+      );
+
+      // SUPPLIER
+      const newsupplier = await tx.supplier.create({
+        data: {
+          ...supplier,
+          id_address: newAddress.id_address,
+        },
+        include: { address: true },
+      });
+
+      return newsupplier;
+    });
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      throw {
+        status: 400,
+        message: "Supplier with this email already exists",
+      };
+    }
+
+    throw error;
   }
-
-  const orders = await prisma.supplierOrder.findMany({
-    where: { id_supplier: id },
-  });
-
-  return orders;
 };
 
 const updateSupplierById = async (id, data) => {
@@ -188,6 +239,7 @@ module.exports = {
   getProductsBySupplierId,
   getOrdersBySupplierId,
   createSupplier,
+  createFullSupplier,
   updateSupplierById,
   deleteSupplierById,
 };

@@ -23,6 +23,21 @@ const getProvinceById = async (id) => {
   return province;
 };
 
+const getProvinceByName = async (name) => {
+  const province = await prisma.province.findFirst({
+    where: { name },
+  });
+
+  if (!province) {
+    throw {
+      status: 404,
+      message: "Province not found",
+    };
+  }
+
+  return province;
+};
+
 const createProvince = async (data) => {
   try {
     return await prisma.province.create({
@@ -104,6 +119,7 @@ const deleteProvince = async (id) => {
 module.exports = {
   getAllProvinces,
   getProvinceById,
+  getProvinceByName,
   createProvince,
   updateProvince,
   deleteProvince,
