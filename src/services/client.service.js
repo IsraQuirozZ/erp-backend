@@ -152,6 +152,73 @@ const updateClient = async (id, data) => {
   }
 };
 
+// USE CASE
+const updateFullClient = async (id_client, data) => {
+  const { client, address, province } = data;
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const existingClient = await tx.client.findUnique({
+        where: { id_client },
+        include: { address: true },
+      });
+
+      if (!existingClient) {
+        throw {
+          status: 404,
+          message: "Client not found",
+        };
+      }
+
+      let existingProvince = await tx.province.findFirst({
+        where: { name: province.name },
+      });
+
+      if (!existingProvince) {
+        existingProvince = await tx.province.create({
+          data: { name: province.name },
+        });
+      }
+
+      const updatedAddress = await tx.address.update({
+        where: { id_address: existingClient.id_address },
+        data: {
+          ...address,
+          id_province: existingProvince.id_province,
+        },
+      });
+
+      const updatedClient = await tx.client.update({
+        where: { id_client },
+        data: {
+          ...client,
+        },
+        include: {
+          address: {
+            include: {
+              province: true,
+            },
+          },
+        },
+      });
+
+      return updatedClient;
+    });
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      throw {
+        status: 400,
+        message: "Client with this email already exists",
+      };
+    }
+
+    throw error;
+  }
+};
+
 // SOFT DELETE
 // RULE FOR THE FUTURE --> Can not be deleted if it has associated records (orders,payments, invoices... etc)
 const deleteClientById = async (id) => {
@@ -179,5 +246,6 @@ module.exports = {
   createClient,
   createFullClient, // USE CASE
   updateClient,
+  updateFullClient, // USE CASE
   deleteClientById,
 };

@@ -5,6 +5,7 @@ const {
   validateCreateEmployee,
   validateUpdateEmployee,
   validateCreateFullEmployee,
+  validateUpdateFullEmployee,
 } = require("../validators/employee.validator");
 
 // getAllEmployees
@@ -29,6 +30,14 @@ router.put(
   "/:id",
   validateUpdateEmployee,
   employeeController.updateEmployeeById,
+);
+
+// USE CASE
+// updateFullEmployee
+router.put(
+  "/full/:id",
+  validateUpdateFullEmployee,
+  employeeController.updateFullEmployee,
 );
 
 // deleteEmployeeById

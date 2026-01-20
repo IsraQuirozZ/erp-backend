@@ -70,6 +70,17 @@ const updateSupplierById = async (req, res, next) => {
   }
 };
 
+// USE CASE
+const updateFullSupplier = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const supplier = await supplierService.updateFullSupplier(id, req.body);
+    res.json(supplier);
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Soft Delete
 const deleteSupplierById = async (req, res, next) => {
   try {
@@ -91,5 +102,6 @@ module.exports = {
   createSupplier,
   createFullSupplier, // USE CASE
   updateSupplierById,
+  updateFullSupplier, // USE CASE
   deleteSupplierById,
 };

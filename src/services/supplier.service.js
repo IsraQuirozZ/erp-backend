@@ -189,6 +189,73 @@ const updateSupplierById = async (id, data) => {
   }
 };
 
+// USE CASE
+const updateFullSupplier = async (id_supplier, data) => {
+  const { supplier, address, province } = data;
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const existingSupplier = await tx.supplier.findUnique({
+        where: { id_supplier },
+        include: { address: true },
+      });
+
+      if (!existingSupplier) {
+        throw {
+          status: 404,
+          message: "Supplier not found",
+        };
+      }
+
+      let existingProvince = await tx.province.findFirst({
+        where: { name: province.name },
+      });
+
+      if (!existingProvince) {
+        existingProvince = await tx.province.create({
+          data: { name: province.name },
+        });
+      }
+
+      const updatedAddress = await tx.address.update({
+        where: { id_address: existingSupplier.id_address },
+        data: {
+          ...address,
+          id_province: existingProvince.id_province,
+        },
+      });
+
+      const updatedSupplier = await tx.supplier.update({
+        where: { id_supplier },
+        data: {
+          ...supplier,
+        },
+        include: {
+          address: {
+            include: {
+              province: true,
+            },
+          },
+        },
+      });
+
+      return updatedSupplier;
+    });
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      throw {
+        status: 400,
+        message: "Supplier with this email already exists",
+      };
+    }
+
+    throw error;
+  }
+};
+
 // SOFT DELETE
 // RULE FOR THE FUTURE --> Can not be deleted if it has associated records (orders,payments, invoices... etc)
 const deleteSupplierById = async (id) => {
@@ -240,7 +307,8 @@ module.exports = {
   getProductsBySupplierId,
   getOrdersBySupplierId,
   createSupplier,
-  createFullSupplier,
+  createFullSupplier, // USE CASE
   updateSupplierById,
+  updateFullSupplier, // USE CASE
   deleteSupplierById,
 };

@@ -3,7 +3,8 @@ const prisma = require("../config/prisma");
 const getAllProducts = async () => {
   return await prisma.product.findMany({
     where: { active: true },
-    orderBy: { name: "asc" },
+    // orderBy: { name: "asc" },
+    orderBy: { id_product: "asc" },
     include: { supplierProduct: true },
   });
 };

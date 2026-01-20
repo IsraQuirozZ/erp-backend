@@ -5,6 +5,7 @@ const {
   validateCreateSupplier,
   validateUpdateSupplier,
   validateCreateFullSupplier,
+  validateUpdateFullSupplier,
 } = require("../validators/supplier.validator");
 
 // getAllSuppliers
@@ -34,6 +35,13 @@ router.put(
   "/:id",
   validateUpdateSupplier,
   supplierController.updateSupplierById,
+);
+
+// USE CASE
+router.put(
+  "/full/:id",
+  validateUpdateFullSupplier,
+  supplierController.updateFullSupplier,
 );
 
 // delete -> softDelete
