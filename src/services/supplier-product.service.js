@@ -5,7 +5,8 @@ const getAllSupplierProducts = async () => {
     // active false === deleted product
     where: { active: true },
     orderBy: {
-      name: "asc",
+      // name: "asc",
+      id_supplier_product: "asc",
     },
     include: { supplier: true },
   });

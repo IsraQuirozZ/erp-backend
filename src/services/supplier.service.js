@@ -7,9 +7,10 @@ const getAllSuppliers = async () => {
   return prisma.supplier.findMany({
     where: { active: true },
     orderBy: {
-      name: "asc",
+      // name: "asc",
+      id_supplier: "asc",
     },
-    include: { address: true },
+    include: { address: { include: { province: true } } },
   });
 };
 

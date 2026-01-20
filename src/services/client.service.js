@@ -7,9 +7,10 @@ const getAllClients = async () => {
   return prisma.client.findMany({
     where: { active: true },
     orderBy: {
-      firstName: "asc",
+      // firstName: "asc",
+      id_client: "asc",
     },
-    include: { address: true },
+    include: { address: { include: { province: true } } },
   });
 };
 
