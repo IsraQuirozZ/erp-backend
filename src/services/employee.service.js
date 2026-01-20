@@ -185,6 +185,87 @@ const updateEmployeeById = async (id, data) => {
   }
 };
 
+// USE CASE
+const updateFullEmployee = async (id_employee, data) => {
+  const { employee, address, province, department } = data;
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const existingEmployee = await tx.employee.findUnique({
+        where: { id_employee },
+        include: { address: true, department: true },
+      });
+
+      if (!existingEmployee) {
+        throw {
+          status: 404,
+          message: "Employee not found",
+        };
+      }
+
+      let existingProvince = await tx.province.findFirst({
+        where: { name: province.name },
+      });
+
+      if (!existingProvince) {
+        existingProvince = await tx.province.create({
+          data: { name: province.name },
+        });
+      }
+
+      const updatedAddress = await tx.address.update({
+        where: { id_address: existingEmployee.id_address },
+        data: {
+          ...address,
+          id_province: existingProvince.id_province,
+        },
+      });
+
+      // DEPARTMENT --> departmentService
+      let existingDepartment = await departmentService.getDepartmentByName(
+        department.name,
+        tx,
+      );
+
+      if (!existingDepartment) {
+        existingDepartment = await departmentService.createDepartment(
+          department,
+          tx,
+        );
+      }
+
+      const updatedEmployee = await tx.employee.update({
+        where: { id_employee },
+        data: {
+          ...employee,
+        },
+        include: {
+          address: {
+            include: {
+              province: true,
+            },
+          },
+          department: true,
+        },
+      });
+
+      return updatedEmployee;
+    });
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      throw {
+        status: 400,
+        message: "Employee with this email already exists",
+      };
+    }
+
+    throw error;
+  }
+};
+
 // SOFT DELETE
 const deleteEmployeeById = async (id) => {
   const employee = await prisma.employee.findUnique({
@@ -223,5 +304,6 @@ module.exports = {
   createEmployee,
   createFullEmployee,
   updateEmployeeById,
+  updateFullEmployee,
   deleteEmployeeById,
 };

@@ -5,6 +5,7 @@ const {
   validateCreateClient,
   validateUpdateClient,
   validateCreateFullClient,
+  validateUpdateFullClient,
 } = require("../validators/client.validator");
 
 router.get("/", clientController.getClients);
@@ -19,6 +20,14 @@ router.post(
 );
 
 router.put("/:id", validateUpdateClient, clientController.updateClient);
+
+// USE CASE
+router.put(
+  "/full/:id",
+  validateUpdateFullClient,
+  clientController.updateFullClient,
+);
+
 router.delete("/:id", clientController.deleteClientById);
 
 module.exports = router;

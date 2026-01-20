@@ -48,6 +48,17 @@ const updateEmployeeById = async (req, res, next) => {
   }
 };
 
+// USE CASE
+const updateFullEmployee = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const employee = await employeeService.updateFullEmployee(id, req.body);
+    res.json(employee);
+  } catch (error) {
+    next(error);
+  }
+};
+
 const deleteEmployeeById = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
@@ -66,5 +77,6 @@ module.exports = {
   createEmployee,
   createFullEmployee, // USE CASE
   updateEmployeeById,
+  updateFullEmployee,
   deleteEmployeeById,
 };

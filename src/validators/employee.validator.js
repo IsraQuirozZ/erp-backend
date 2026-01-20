@@ -413,8 +413,165 @@ const validateCreateFullEmployee = (req, res, next) => {
   next();
 };
 
+const validateUpdateFullEmployee = (req, res, next) => {
+  const { employee, address, province, department } = req.body;
+
+  if (!employee || !address || !province || !department) {
+    return res.status(400).json({
+      error: "Employee, Department, Address and Province are required",
+    });
+  }
+
+  if (
+    employee.id_employee !== undefined ||
+    department.id_department !== undefined ||
+    address.id_address !== undefined ||
+    province.id_province !== undefined
+  ) {
+    return res.status(400).json({
+      error: "IDs must not be provided",
+    });
+  }
+
+  try {
+    // EMPLOYEE
+    // FIRST_NAME
+    employee.firstName = validateStringField(employee.firstName, "First name", {
+      onlyLetters: true,
+    });
+
+    // LAST_NAME
+    employee.lastName = validateStringField(employee.lastName, "Last name", {
+      onlyLetters: true,
+    });
+
+    // PHONE
+    if (
+      !employee.phone ||
+      typeof employee.phone !== "string" ||
+      !phoneRegex.test(employee.phone.trim())
+    ) {
+      return res.status(400).json({
+        error: "The phone number must have 9 digits",
+      });
+    }
+
+    // EMAIL
+    if (
+      !employee.email ||
+      typeof employee.email !== "string" ||
+      !emailRegex.test(employee.email.trim())
+    ) {
+      return res.status(400).json({
+        error: "Email must be a valid email address",
+      });
+    }
+
+    // JOB_TITLE
+    employee.job_title = validateStringField(employee.job_title, "Job Title", {
+      onlyLetters: true,
+    });
+
+    // HIRE_DATE -> Standar format: YYYY/MM/DD
+    if (!employee.hire_date || typeof employee.hire_date !== "string") {
+      return res
+        .status(400)
+        .json({ error: "Hire date is required and must be a string" });
+    }
+
+    const trimmedHireDate = employee.hire_date.trim();
+    const parsedHireDate = new Date(trimmedHireDate);
+
+    if (isNaN(parsedHireDate.getTime())) {
+      return res.status(400).json({
+        error: "Hire date must be a valid date",
+      });
+    }
+
+    const now = new Date();
+    if (parsedHireDate.getTime() > now.getTime()) {
+      return res.status(400).json({
+        error: "Hire date cannot be in the future",
+      });
+    }
+
+    // BASE_SALARY
+    employee.base_salary = validateDecimalField(
+      employee.base_salary,
+      "Base salary",
+    );
+
+    // ACTIVE
+    if (employee.active !== undefined && typeof employee.active !== "boolean") {
+      return res.status(400).json({ error: "Active must be a boolean value" });
+    }
+
+    // NORMALIZE
+    employee.phone = employee.phone.trim();
+    employee.email = employee.email.trim().toLowerCase();
+    employee.hire_date = parsedHireDate;
+    if (employee.active === undefined) {
+      employee.active = true;
+    }
+
+    // ADDRESS
+    address.street = validateStringField(address.street, "Street");
+    address.number = validateStringField(address.number, "Street number");
+
+    address.portal = validateStringField(address.portal, "Portal", {
+      required: false,
+    });
+
+    address.floor = validateStringField(address.floor, "Floor", {
+      required: false,
+    });
+
+    address.door = validateStringField(address.door, "Door", {
+      required: false,
+    });
+
+    address.municipality = validateStringField(
+      address.municipality,
+      "Municipality",
+      { onlyLetters: true },
+    );
+
+    if (
+      !address.postal_code ||
+      typeof address.postal_code !== "string" ||
+      !/^[0-9]{5}$/.test(address.postal_code.trim())
+    ) {
+      return res.status(400).json({
+        error: "Postal code must have 5 digits",
+      });
+    }
+
+    address.postal_code = address.postal_code.trim();
+
+    // PROVINCE
+    province.name = validateStringField(province.name, "Province name", {
+      onlyLetters: true,
+    });
+
+    // DEPARTMENT
+    department.name = validateStringField(department.name, "Department Name", {
+      onlyLetters: true,
+    });
+
+    department.desc = validateStringField(department.desc, "Description", {
+      required: false,
+      capitalizeFirst: true,
+    });
+  } catch (error) {
+    return next(error);
+  }
+
+  next();
+};
+
 module.exports = {
   validateCreateEmployee,
   validateUpdateEmployee,
   validateCreateFullEmployee,
+  validateUpdateFullEmployee,
 };

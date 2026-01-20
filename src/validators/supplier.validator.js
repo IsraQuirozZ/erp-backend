@@ -249,8 +249,103 @@ const validateCreateFullSupplier = (req, res, next) => {
   next();
 };
 
+const validateUpdateFullSupplier = (req, res, next) => {
+  const { supplier, address, province } = req.body;
+
+  if (!supplier || !address || !province) {
+    return res.status(400).json({
+      error: "Supplier, Address and Province are required",
+    });
+  }
+
+  if (
+    supplier.id_supplier !== undefined ||
+    address.id_address !== undefined ||
+    province.id_province !== undefined
+  ) {
+    return res.status(400).json({
+      error: "IDs must not be provided",
+    });
+  }
+
+  try {
+    // SUPPLIER
+    supplier.name = validateStringField(supplier.name, "Name");
+
+    // PHONE
+    if (
+      !supplier.phone ||
+      typeof supplier.phone !== "string" ||
+      !phoneRegex.test(supplier.phone.trim())
+    ) {
+      return res.status(400).json({
+        error: "The phone number must have 9 digits",
+      });
+    }
+
+    // EMAIL
+    if (
+      !supplier.email ||
+      typeof supplier.email !== "string" ||
+      !emailRegex.test(supplier.email.trim())
+    ) {
+      return res.status(400).json({
+        error: "Email must be a valid email address",
+      });
+    }
+
+    // NORMALIZE
+    supplier.phone = supplier.phone.trim();
+    supplier.email = supplier.email.trim().toLowerCase();
+
+    // ADDRESS
+    address.street = validateStringField(address.street, "Street");
+    address.number = validateStringField(address.number, "Street number");
+
+    address.portal = validateStringField(address.portal, "Portal", {
+      required: false,
+    });
+
+    address.floor = validateStringField(address.floor, "Floor", {
+      required: false,
+    });
+
+    address.door = validateStringField(address.door, "Door", {
+      required: false,
+    });
+
+    address.municipality = validateStringField(
+      address.municipality,
+      "Municipality",
+      { onlyLetters: true },
+    );
+
+    if (
+      !address.postal_code ||
+      typeof address.postal_code !== "string" ||
+      !/^[0-9]{5}$/.test(address.postal_code.trim())
+    ) {
+      return res.status(400).json({
+        error: "Postal code must have 5 digits",
+      });
+    }
+
+    address.postal_code = address.postal_code.trim();
+
+    // PROVINCE
+    province.name = validateStringField(province.name, "Province name", {
+      onlyLetters: true,
+    });
+  } catch (error) {
+    return next(error);
+  }
+
+  next();
+};
+
 module.exports = {
   validateCreateSupplier,
   validateUpdateSupplier,
   validateCreateFullSupplier,
+  validateUpdateFullSupplier,
 };
