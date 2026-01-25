@@ -1,6 +1,7 @@
 const prisma = require("../config/prisma");
 const bcrypt = require("bcrypt");
 
+// FIRST REGISTER ON DB -> ADMIN
 // TODO: Register COMPANY
 const registerAdmin = async (data) => {
   return prisma.$transaction(async (tx) => {
@@ -24,6 +25,7 @@ const registerAdmin = async (data) => {
       data: {
         email: data.email,
         password_hash: hashedPassword,
+        username: data.username,
       },
     });
 
@@ -38,6 +40,7 @@ const registerAdmin = async (data) => {
   });
 };
 
+// LOGIN
 const login = async (data) => {
   const user = await prisma.user.findUnique({
     where: { email: data.email },
@@ -70,7 +73,45 @@ const login = async (data) => {
   };
 };
 
+// CREATE USER -> ONLY ADMIN CAN CREATE USERS AND ASSIGN NEW ROLES
+const createUser = async ({ email, password, role, username }) => {
+  const existingUser = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  if (existingUser) {
+    throw {
+      status: 400,
+      message: "This email is already registered",
+    };
+  }
+
+  let existingRole = await prisma.role.findUnique({
+    where: { name: role },
+  });
+
+  if (!existingRole) {
+    existingRole = await prisma.role.create({
+      data: { name: role },
+    });
+  }
+
+  const SALT_ROUNDS = 10;
+  const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
+  const user = await prisma.user.create({
+    data: { email, username, password_hash: hashedPassword },
+  });
+
+  await prisma.userRole.create({
+    data: { id_user: user.id_user, id_role: existingRole.id_role },
+  });
+
+  return user;
+};
+
 module.exports = {
   registerAdmin,
   login,
+  createUser,
 };
