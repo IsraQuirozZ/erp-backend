@@ -14,6 +14,8 @@ const login = async (req, res, next) => {
   try {
     const user = await authService.login(req.body);
 
+    const roles = user.roles.map((ur) => ur.role.name);
+
     const token = jwt.sign(
       {
         id_user: user.id_user,
