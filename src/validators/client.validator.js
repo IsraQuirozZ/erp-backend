@@ -1,8 +1,5 @@
 const { phoneRegex, emailRegex } = require("../utils/regex.utils");
-const {
-  validateStringField,
-  validateIntField,
-} = require("../utils/validators.utils");
+const { validateStringField } = require("../utils/validators.utils");
 
 const validateCreateClient = (req, res, next) => {
   if (req.body.id_client !== undefined) {
