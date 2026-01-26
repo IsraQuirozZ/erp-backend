@@ -36,7 +36,7 @@ const registerAdmin = async (data) => {
       },
     });
 
-    return user;
+    return { username: user.username, email: user.email };
   });
 };
 

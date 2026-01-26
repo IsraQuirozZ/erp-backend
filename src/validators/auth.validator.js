@@ -45,11 +45,9 @@ const validateRegisterAdmin = async (req, res, next) => {
 
   // USERNAME
   try {
-    if (username !== undefined) {
-      req.body.username = validateStringField(username, "Username", {
-        capitalizeFirst: true,
-      });
-    }
+    req.body.username = validateStringField(username, "Username", {
+      capitalizeFirst: true,
+    });
   } catch (error) {
     return next(error);
   }
