@@ -69,7 +69,7 @@ const validateStringField = (
     };
   }
 
-  const trimmedValue = value.trim();
+  let trimmedValue = value.trim();
 
   if (onlyLetters && !onlyLettersRegex.test(trimmedValue)) {
     throw {

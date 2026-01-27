@@ -259,7 +259,7 @@ model Shipment {
 model ClientOrder {
   id_client_order         Int @id @default(autoincrement())
   created_at              DateTime @default(now())
-  updated_at              DateTime @updatedAt
+  updated_at              DateTime @default(now())
   expected_delivery_date  DateTime?
   status                  OrderStatus @default(PENDING)
   total                   Decimal @db.Decimal(10,2) @default(0)
@@ -286,4 +286,45 @@ model ClientOrderItem {
 
   @@id([id_client_order, id_product])
 
+}
+
+model Company {
+  id_company    Int @id @default(autoincrement())
+  name          String @db.VarChar(100)
+  tax_id        String @unique @db.VarChar(50)
+  phone         String @db.VarChar(20)
+  email         String @unique @db.VarChar(100)
+  active        Boolean @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+}
+
+model User {
+  id_user         Int @id @default(autoincrement())
+  username        String? @db.VarChar(100)
+  email           String @unique @db.VarChar(100)
+  password_hash   String @db.VarChar(255)
+  active          Boolean @default(true)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  deleted_at      DateTime? 
+
+  roles           UserRole[]
+}
+
+model Role {
+  id_role   Int @id @default(autoincrement())
+  name      String @unique @db.VarChar(100) 
+
+  users     UserRole[]
+}
+
+model UserRole {
+  id_user   Int
+  user      User @relation(fields: [id_user], references: [id_user])
+
+  id_role   Int
+  role      Role @relation(fields: [id_role], references: [id_role])
+
+  @@id([id_user, id_role])
 }

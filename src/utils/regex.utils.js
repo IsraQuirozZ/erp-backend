@@ -5,6 +5,8 @@ const phoneRegex = /^[0-9]{9}$/;
 const salaryRegex = /^[0-9]+(\.[0-9]{1,2})?$/;
 const decimalRegex = /^[0-9]+(\.[0-9]{1,2})?$/;
 const periodRegex = /^\d{4}-(0[1-9]|1[0-2])$/;
+const passwordRegex =
+  /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{9,12}$/;
 
 module.exports = {
   onlyLettersRegex,
@@ -14,4 +16,5 @@ module.exports = {
   salaryRegex,
   decimalRegex,
   periodRegex,
+  passwordRegex,
 };
