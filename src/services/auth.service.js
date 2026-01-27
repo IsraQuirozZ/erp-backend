@@ -50,7 +50,7 @@ const login = async (data) => {
   if (!user) {
     throw {
       status: 400,
-      message: "This email is not registered",
+      message: "The email address or password you entered is incorrect.",
     };
   }
 
@@ -59,7 +59,7 @@ const login = async (data) => {
   if (!isValid) {
     throw {
       status: 400,
-      message: "Incorrect Password",
+      message: "The email address or password you entered is incorrect.",
     };
   }
 
@@ -68,7 +68,6 @@ const login = async (data) => {
   return {
     id_user: user.id_user,
     username: user.username,
-    email: user.email,
     roles: roles,
   };
 };
@@ -107,7 +106,7 @@ const createUser = async ({ email, password, role, username }) => {
     data: { id_user: user.id_user, id_role: existingRole.id_role },
   });
 
-  return user;
+  return { id_user: user.id_user, username: user.username };
 };
 
 module.exports = {

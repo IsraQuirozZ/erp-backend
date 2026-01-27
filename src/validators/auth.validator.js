@@ -53,7 +53,7 @@ const validateRegisterAdmin = async (req, res, next) => {
   }
 
   // NORMALIZE
-  req.body.email = email.trim();
+  req.body.email = email.trim().toLowerCase();
   req.body.password = password.trim();
 
   next();
@@ -74,7 +74,7 @@ const validateLogin = async (req, res, next) => {
   }
 
   // NORMALIZE
-  req.body.email = email.trim();
+  req.body.email = email.trim().toLocaleLowerCase();
   req.body.password = password.trim();
 
   next();
@@ -134,7 +134,7 @@ const validateCreateUser = async (req, res, next) => {
   }
 
   // NORMALIZE
-  req.body.email = email.trim();
+  req.body.email = email.trim().toLocaleLowerCase();
   req.body.password = password.trim();
 
   next();
