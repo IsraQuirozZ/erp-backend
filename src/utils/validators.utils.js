@@ -2,6 +2,7 @@ const {
   decimalRegex,
   onlyLettersRegex,
   onlyNumbersRegex,
+  onlyLettersAndNumbersRegex,
 } = require("./regex.utils");
 const { CapitalizeFirstLetter, capitalize } = require("./string.utils");
 
@@ -48,7 +49,12 @@ const validateDecimalField = (value, fieldName, { required = true } = {}) => {
 const validateStringField = (
   value,
   fieldName,
-  { required = true, onlyLetters = false, capitalizeFirst = false } = {},
+  {
+    required = true,
+    onlyLetters = false,
+    capitalizeFirst = false,
+    onlyLettersAndNumbers = false,
+  } = {},
 ) => {
   // onlyletters just for names, last names... etc.
   // capitalizeFirst: true if capitalize just the first
@@ -75,6 +81,13 @@ const validateStringField = (
     throw {
       status: 400,
       message: `${fieldName} must contain only letters`,
+    };
+  }
+
+  if (onlyLettersAndNumbers && !onlyLettersAndNumbersRegex.test(trimmedValue)) {
+    throw {
+      status: 400,
+      message: `${fieldName} must contain only letters and numbers`,
     };
   }
 

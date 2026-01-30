@@ -5,7 +5,7 @@ const addressService = require("../services/address.service");
 
 const getAllClients = async () => {
   return prisma.client.findMany({
-    where: { active: true },
+    // where: { active: true },
     orderBy: {
       // firstName: "asc",
       id_client: "asc",

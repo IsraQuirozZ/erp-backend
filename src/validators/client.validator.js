@@ -1,4 +1,8 @@
-const { phoneRegex, emailRegex } = require("../utils/regex.utils");
+const {
+  phoneRegex,
+  emailRegex,
+  onlyLettersAndNumbersRegex,
+} = require("../utils/regex.utils");
 const { validateStringField } = require("../utils/validators.utils");
 
 const validateCreateClient = (req, res, next) => {
@@ -25,7 +29,7 @@ const validateCreateClient = (req, res, next) => {
   // PHONE
   if (!phone || typeof phone !== "string" || !phoneRegex.test(phone.trim())) {
     return res.status(400).json({
-      error: "The phone number must have 9 digits",
+      error: "The phone number must have between 9-12 digits",
     });
   }
 
@@ -166,7 +170,7 @@ const validateCreateFullClient = (req, res, next) => {
       !phoneRegex.test(client.phone.trim())
     ) {
       return res.status(400).json({
-        error: "The phone number must have 9 digits",
+        error: "The phone number must have between 9-12 digits",
       });
     }
 
@@ -195,7 +199,9 @@ const validateCreateFullClient = (req, res, next) => {
 
     // -- ADDRESS --
     // STREET
-    address.street = validateStringField(address.street, "Street");
+    address.street = validateStringField(address.street, "Street", {
+      onlyLettersAndNumbers: true,
+    });
 
     // NUMBER
     address.number = validateStringField(address.number, "St. Number");
@@ -219,7 +225,6 @@ const validateCreateFullClient = (req, res, next) => {
     address.municipality = validateStringField(
       address.municipality,
       "Municipality",
-      { onlyLetters: true },
     );
 
     // POSTAL_CODE
@@ -243,7 +248,7 @@ const validateCreateFullClient = (req, res, next) => {
     address.postal_code = address.postal_code.trim();
 
     // POVINCE
-    province.name = validateStringField(province.name, "Name", {
+    province.name = validateStringField(province.name, "Province", {
       onlyLetters: true,
     });
   } catch (error) {
