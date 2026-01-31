@@ -3,21 +3,27 @@ const { Prisma } = require("@prisma/client");
 const provinceService = require("../services/province.service");
 const addressService = require("../services/address.service");
 
-const getAllClients = async () => {
-  return prisma.client.findMany({
-    // where: { active: true },
-    orderBy: {
-      // firstName: "asc",
-      id_client: "asc",
-    },
+const getAllClients = async ({ skip, take, where }) => {
+  return await prisma.client.findMany({
+    where: where || {},
+    skip,
+    take,
     include: { address: { include: { province: true } } },
+    orderBy: { firstName: "asc" },
+  });
+};
+
+// Count Clients
+const countClients = async (where) => {
+  return await prisma.client.count({
+    where: where || {},
   });
 };
 
 const getClientById = async (id) => {
   const client = await prisma.client.findUnique({
     where: { id_client: id },
-    include: { address: true },
+    include: { address: { include: { province: true } } },
   });
 
   if (!client) {
@@ -219,8 +225,8 @@ const updateFullClient = async (id_client, data) => {
   }
 };
 
-// SOFT DELETE
-// RULE FOR THE FUTURE --> Can not be deleted if it has associated records (orders,payments, invoices... etc)
+// ACTIVATE/DEACTIVATE
+// RULE FOR THE FUTURE --> Can not be deactivated if it has associated records (orders,payments, invoices... etc)
 const deleteClientById = async (id) => {
   const client = await prisma.client.findUnique({
     where: { id_client: id },
@@ -233,15 +239,24 @@ const deleteClientById = async (id) => {
     };
   }
 
+  if (!client.active) {
+    return await prisma.client.update({
+      where: { id_client: id },
+      // include: { address: true },
+      data: { active: true },
+    });
+  }
+
   return await prisma.client.update({
     where: { id_client: id },
-    include: { address: true },
+    // include: { address: true },
     data: { active: false },
   });
 };
 
 module.exports = {
   getAllClients,
+  countClients, // Count
   getClientById,
   createClient,
   createFullClient, // USE CASE
