@@ -68,6 +68,10 @@ const validateStringField = (
     return null;
   }
 
+  if (!required && (value.trim().length === 0 || value === undefined)) {
+    return null;
+  }
+
   if (typeof value !== "string" || value.trim().length === 0) {
     throw {
       status: 400,

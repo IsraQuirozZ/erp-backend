@@ -2,8 +2,26 @@ const clientService = require("../services/client.service");
 
 const getClients = async (req, res, next) => {
   try {
-    const clients = await clientService.getAllClients();
-    res.json(clients);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const status = req.query.status || "active";
+
+    let where = {};
+
+    // Status filter
+    if (status === "active") where.active = true;
+    if (status === "inactive") where.active = false;
+
+    const [clients, total] = await Promise.all([
+      clientService.getAllClients({ skip, take: limit, where }),
+      clientService.countClients(where), // Count total clients
+    ]);
+
+    const pages = Math.ceil(total / limit);
+
+    res.json({ data: clients, page, pages, total });
   } catch (error) {
     next(error);
   }
