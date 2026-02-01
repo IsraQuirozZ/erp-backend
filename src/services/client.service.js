@@ -21,13 +21,6 @@ const countClients = async (where) => {
   });
 };
 
-// Count Clients
-const countClients = async (where) => {
-  return await prisma.client.count({
-    where: where || {},
-  });
-};
-
 const getClientById = async (id) => {
   const client = await prisma.client.findUnique({
     where: { id_client: id },
