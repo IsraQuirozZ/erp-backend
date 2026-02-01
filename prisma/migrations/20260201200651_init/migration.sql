@@ -30,6 +30,8 @@ CREATE TABLE `Client` (
     `phone` VARCHAR(20) NOT NULL,
     `email` VARCHAR(100) NOT NULL,
     `active` BOOLEAN NOT NULL DEFAULT true,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
     `id_address` INTEGER NOT NULL,
 
     UNIQUE INDEX `Client_email_key`(`email`),
@@ -43,6 +45,8 @@ CREATE TABLE `Supplier` (
     `phone` VARCHAR(20) NOT NULL,
     `email` VARCHAR(100) NOT NULL,
     `active` BOOLEAN NOT NULL DEFAULT true,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
     `id_address` INTEGER NOT NULL,
 
     UNIQUE INDEX `Supplier_email_key`(`email`),
@@ -70,6 +74,8 @@ CREATE TABLE `Employee` (
     `hire_date` DATETIME(3) NOT NULL,
     `base_salary` DECIMAL(10, 2) NOT NULL,
     `active` BOOLEAN NOT NULL DEFAULT true,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
     `id_address` INTEGER NOT NULL,
     `id_department` INTEGER NOT NULL,
 
@@ -93,16 +99,16 @@ CREATE TABLE `Payroll` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `SUPPLIER_PRODUCT` (
-    `id_supplier_product` INTEGER NOT NULL AUTO_INCREMENT,
+CREATE TABLE `Component` (
+    `id_component` INTEGER NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(100) NOT NULL,
-    `purchase_price` DECIMAL(10, 2) NOT NULL,
+    `price` DECIMAL(10, 2) NOT NULL,
     `description` VARCHAR(250) NULL,
     `active` BOOLEAN NOT NULL DEFAULT true,
     `id_supplier` INTEGER NOT NULL,
 
-    UNIQUE INDEX `SUPPLIER_PRODUCT_id_supplier_name_key`(`id_supplier`, `name`),
-    PRIMARY KEY (`id_supplier_product`)
+    UNIQUE INDEX `Component_id_supplier_name_key`(`id_supplier`, `name`),
+    PRIMARY KEY (`id_component`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
@@ -121,15 +127,13 @@ CREATE TABLE `SupplierOrder` (
 
 -- CreateTable
 CREATE TABLE `SupplierOrderItem` (
-    `id_supplier_order_item` INTEGER NOT NULL AUTO_INCREMENT,
     `quantity` INTEGER NOT NULL,
     `unit_price` DECIMAL(10, 2) NOT NULL,
     `subtotal` DECIMAL(10, 2) NOT NULL,
     `id_supplier_order` INTEGER NOT NULL,
-    `id_supplier_product` INTEGER NOT NULL,
+    `id_component` INTEGER NOT NULL,
 
-    UNIQUE INDEX `SupplierOrderItem_id_supplier_order_id_supplier_product_key`(`id_supplier_order`, `id_supplier_product`),
-    PRIMARY KEY (`id_supplier_order_item`)
+    PRIMARY KEY (`id_supplier_order`, `id_component`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
@@ -139,10 +143,17 @@ CREATE TABLE `Product` (
     `price` DECIMAL(10, 2) NOT NULL,
     `description` VARCHAR(250) NULL,
     `active` BOOLEAN NOT NULL DEFAULT true,
-    `id_supplier_product` INTEGER NOT NULL,
 
-    UNIQUE INDEX `Product_name_id_supplier_product_key`(`name`, `id_supplier_product`),
     PRIMARY KEY (`id_product`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `ProductComponent` (
+    `quantity` INTEGER NOT NULL,
+    `id_product` INTEGER NOT NULL,
+    `id_component` INTEGER NOT NULL,
+
+    PRIMARY KEY (`id_product`, `id_component`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
@@ -165,10 +176,10 @@ CREATE TABLE `SupplierProductInventory` (
     `min_stock` INTEGER NOT NULL,
     `last_updated` DATETIME(3) NOT NULL,
     `active` BOOLEAN NOT NULL DEFAULT true,
-    `id_supplier_product` INTEGER NOT NULL,
+    `id_component` INTEGER NOT NULL,
     `id_warehouse` INTEGER NOT NULL,
 
-    PRIMARY KEY (`id_supplier_product`, `id_warehouse`)
+    PRIMARY KEY (`id_component`, `id_warehouse`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
@@ -223,6 +234,73 @@ CREATE TABLE `ClientOrderItem` (
     PRIMARY KEY (`id_client_order`, `id_product`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable
+CREATE TABLE `Company` (
+    `id_company` INTEGER NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(100) NOT NULL,
+    `tax_id` VARCHAR(50) NOT NULL,
+    `phone` VARCHAR(20) NOT NULL,
+    `email` VARCHAR(100) NOT NULL,
+    `active` BOOLEAN NOT NULL DEFAULT true,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
+
+    UNIQUE INDEX `Company_tax_id_key`(`tax_id`),
+    UNIQUE INDEX `Company_email_key`(`email`),
+    PRIMARY KEY (`id_company`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `User` (
+    `id_user` INTEGER NOT NULL AUTO_INCREMENT,
+    `username` VARCHAR(100) NOT NULL,
+    `email` VARCHAR(100) NOT NULL,
+    `password_hash` VARCHAR(255) NOT NULL,
+    `active` BOOLEAN NOT NULL DEFAULT true,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
+    `deleted_at` DATETIME(3) NULL,
+
+    UNIQUE INDEX `User_email_key`(`email`),
+    PRIMARY KEY (`id_user`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Role` (
+    `id_role` INTEGER NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(100) NOT NULL,
+    `description` VARCHAR(250) NULL,
+
+    UNIQUE INDEX `Role_name_key`(`name`),
+    PRIMARY KEY (`id_role`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Permission` (
+    `id_permission` INTEGER NOT NULL AUTO_INCREMENT,
+    `code` VARCHAR(100) NOT NULL,
+    `description` VARCHAR(250) NULL,
+
+    UNIQUE INDEX `Permission_code_key`(`code`),
+    PRIMARY KEY (`id_permission`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `UserRole` (
+    `id_user` INTEGER NOT NULL,
+    `id_role` INTEGER NOT NULL,
+
+    PRIMARY KEY (`id_user`, `id_role`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `RolePermission` (
+    `id_role` INTEGER NOT NULL,
+    `id_permission` INTEGER NOT NULL,
+
+    PRIMARY KEY (`id_role`, `id_permission`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- AddForeignKey
 ALTER TABLE `Address` ADD CONSTRAINT `Address_id_province_fkey` FOREIGN KEY (`id_province`) REFERENCES `Province`(`id_province`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -242,7 +320,7 @@ ALTER TABLE `Employee` ADD CONSTRAINT `Employee_id_department_fkey` FOREIGN KEY 
 ALTER TABLE `Payroll` ADD CONSTRAINT `Payroll_id_employee_fkey` FOREIGN KEY (`id_employee`) REFERENCES `Employee`(`id_employee`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `SUPPLIER_PRODUCT` ADD CONSTRAINT `SUPPLIER_PRODUCT_id_supplier_fkey` FOREIGN KEY (`id_supplier`) REFERENCES `Supplier`(`id_supplier`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `Component` ADD CONSTRAINT `Component_id_supplier_fkey` FOREIGN KEY (`id_supplier`) REFERENCES `Supplier`(`id_supplier`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `SupplierOrder` ADD CONSTRAINT `SupplierOrder_id_supplier_fkey` FOREIGN KEY (`id_supplier`) REFERENCES `Supplier`(`id_supplier`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -251,16 +329,19 @@ ALTER TABLE `SupplierOrder` ADD CONSTRAINT `SupplierOrder_id_supplier_fkey` FORE
 ALTER TABLE `SupplierOrderItem` ADD CONSTRAINT `SupplierOrderItem_id_supplier_order_fkey` FOREIGN KEY (`id_supplier_order`) REFERENCES `SupplierOrder`(`id_supplier_order`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `SupplierOrderItem` ADD CONSTRAINT `SupplierOrderItem_id_supplier_product_fkey` FOREIGN KEY (`id_supplier_product`) REFERENCES `SUPPLIER_PRODUCT`(`id_supplier_product`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `SupplierOrderItem` ADD CONSTRAINT `SupplierOrderItem_id_component_fkey` FOREIGN KEY (`id_component`) REFERENCES `Component`(`id_component`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Product` ADD CONSTRAINT `Product_id_supplier_product_fkey` FOREIGN KEY (`id_supplier_product`) REFERENCES `SUPPLIER_PRODUCT`(`id_supplier_product`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `ProductComponent` ADD CONSTRAINT `ProductComponent_id_product_fkey` FOREIGN KEY (`id_product`) REFERENCES `Product`(`id_product`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `ProductComponent` ADD CONSTRAINT `ProductComponent_id_component_fkey` FOREIGN KEY (`id_component`) REFERENCES `Component`(`id_component`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Warehouse` ADD CONSTRAINT `Warehouse_id_address_fkey` FOREIGN KEY (`id_address`) REFERENCES `Address`(`id_address`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `SupplierProductInventory` ADD CONSTRAINT `SupplierProductInventory_id_supplier_product_fkey` FOREIGN KEY (`id_supplier_product`) REFERENCES `SUPPLIER_PRODUCT`(`id_supplier_product`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `SupplierProductInventory` ADD CONSTRAINT `SupplierProductInventory_id_component_fkey` FOREIGN KEY (`id_component`) REFERENCES `Component`(`id_component`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `SupplierProductInventory` ADD CONSTRAINT `SupplierProductInventory_id_warehouse_fkey` FOREIGN KEY (`id_warehouse`) REFERENCES `Warehouse`(`id_warehouse`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -285,3 +366,15 @@ ALTER TABLE `ClientOrderItem` ADD CONSTRAINT `ClientOrderItem_id_client_order_fk
 
 -- AddForeignKey
 ALTER TABLE `ClientOrderItem` ADD CONSTRAINT `ClientOrderItem_id_product_fkey` FOREIGN KEY (`id_product`) REFERENCES `Product`(`id_product`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `UserRole` ADD CONSTRAINT `UserRole_id_user_fkey` FOREIGN KEY (`id_user`) REFERENCES `User`(`id_user`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `UserRole` ADD CONSTRAINT `UserRole_id_role_fkey` FOREIGN KEY (`id_role`) REFERENCES `Role`(`id_role`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `RolePermission` ADD CONSTRAINT `RolePermission_id_role_fkey` FOREIGN KEY (`id_role`) REFERENCES `Role`(`id_role`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `RolePermission` ADD CONSTRAINT `RolePermission_id_permission_fkey` FOREIGN KEY (`id_permission`) REFERENCES `Permission`(`id_permission`) ON DELETE CASCADE ON UPDATE CASCADE;
