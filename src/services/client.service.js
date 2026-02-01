@@ -3,13 +3,13 @@ const { Prisma } = require("@prisma/client");
 const provinceService = require("../services/province.service");
 const addressService = require("../services/address.service");
 
-const getAllClients = async ({ skip, take, where }) => {
+const getAllClients = async ({ skip, take, where, orderBy }) => {
   return await prisma.client.findMany({
     where: where || {},
     skip,
     take,
+    orderBy: orderBy || { firstName: "asc", lastName: "asc" },
     include: { address: { include: { province: true } } },
-    orderBy: { firstName: "asc" },
   });
 };
 

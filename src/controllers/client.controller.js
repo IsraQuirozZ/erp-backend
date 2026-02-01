@@ -14,8 +14,17 @@ const getClients = async (req, res, next) => {
     if (status === "active") where.active = true;
     if (status === "inactive") where.active = false;
 
+    // Sort by name
+    const sort = req.query.sort || "name";
+    const order = req.query.order === "desc" ? "desc" : "asc";
+    let orderBy = [];
+    if (sort === "name") orderBy = [{ firstName: order }, { lastName: order }];
+
+    // TODO: Sort by created_at
+    // if(sort === "created_at") orderBy = [{ created_at: order }];
+
     const [clients, total] = await Promise.all([
-      clientService.getAllClients({ skip, take: limit, where }),
+      clientService.getAllClients({ skip, take: limit, where, orderBy }),
       clientService.countClients(where), // Count total clients
     ]);
 
