@@ -10,6 +10,14 @@ const getAllClients = async ({ skip, take, where, orderBy }) => {
     take,
     orderBy: orderBy || { firstName: "asc", lastName: "asc" },
     include: { address: { include: { province: true } } },
+    orderBy: { firstName: "asc" },
+  });
+};
+
+// Count Clients
+const countClients = async (where) => {
+  return await prisma.client.count({
+    where: where || {},
   });
 };
 
