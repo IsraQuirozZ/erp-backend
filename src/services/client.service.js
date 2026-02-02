@@ -10,7 +10,6 @@ const getAllClients = async ({ skip, take, where, orderBy }) => {
     take,
     orderBy: orderBy || { firstName: "asc", lastName: "asc" },
     include: { address: { include: { province: true } } },
-    orderBy: { firstName: "asc" },
   });
 };
 
@@ -187,7 +186,7 @@ const updateFullClient = async (id_client, data) => {
         });
       }
 
-      const updatedAddress = await tx.address.update({
+      await tx.address.update({
         where: { id_address: existingClient.id_address },
         data: {
           ...address,

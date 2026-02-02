@@ -54,6 +54,7 @@ const validateStringField = (
     onlyLetters = false,
     capitalizeFirst = false,
     onlyLettersAndNumbers = false,
+    onlyNumbers = false,
   } = {},
 ) => {
   // onlyletters just for names, last names... etc.
@@ -85,6 +86,13 @@ const validateStringField = (
     throw {
       status: 400,
       message: `${fieldName} must contain only letters`,
+    };
+  }
+
+  if (onlyNumbers && !onlyNumbersRegex.test(trimmedValue)) {
+    throw {
+      status: 400,
+      message: `${fieldName} must contain only numbers`,
     };
   }
 

@@ -2,7 +2,6 @@ const prisma = require("../config/prisma");
 
 const getAllSupplierProducts = async () => {
   return await prisma.supplierProduct.findMany({
-    // active false === deleted product
     where: { active: true },
     orderBy: {
       // name: "asc",
@@ -26,6 +25,26 @@ const getSupplierProductById = async (id) => {
   }
 
   return product;
+};
+
+const getComponentsBySupplierId = async (id) => {
+  const supplier = await prisma.supplier.findUnique({
+    where: { id_supplier: id },
+  });
+
+  if (!supplier) {
+    throw {
+      status: 400,
+      message: "Supplier not found",
+    };
+  }
+
+  const components = await prisma.component.findMany({
+    where: { id_supplier: id },
+    orderBy: { id_component: "asc" },
+    include: { supplier: true },
+  });
+  return components;
 };
 
 const createSupplierProduct = async (data) => {
@@ -131,6 +150,7 @@ const deleteSupplierProductById = async (id) => {
 module.exports = {
   getAllSupplierProducts,
   getSupplierProductById,
+  getComponentsBySupplierId,
   createSupplierProduct,
   updateSupplierProductById,
   deleteSupplierProductById,

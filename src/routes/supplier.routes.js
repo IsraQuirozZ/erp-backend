@@ -14,9 +14,6 @@ router.get("/", supplierController.getSuppliers);
 // getSupplierById
 router.get("/:id", supplierController.getSupplier);
 
-// getProductsBySupplierId
-router.get("/:id/products", supplierController.getProductsBySupplierId);
-
 // getOrdersBySupplierId
 router.get("/:id/orders", supplierController.getOrdersBySupplierId);
 

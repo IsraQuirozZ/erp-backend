@@ -12,20 +12,24 @@ router.get("/", supplierProductController.getAllSupplierProducts);
 // getProductById
 router.get("/:id", supplierProductController.getSupplierProductById);
 
-// getProductsBySupplierId -> Handle in supplier
+// getProductsBySupplierId
+router.get(
+  "/:id/components",
+  supplierProductController.getComponentsBySupplierId,
+);
 
 // createSupplierProduct
 router.post(
   "/",
   validateCreateSupplierProduct,
-  supplierProductController.createSupplierProduct
+  supplierProductController.createSupplierProduct,
 );
 
 // updateSupplierProductById
 router.put(
   "/:id",
   validateUpdateSupplierProduct,
-  supplierProductController.updateSupplierProductById
+  supplierProductController.updateSupplierProductById,
 );
 
 // softDeleteSupplierProductById

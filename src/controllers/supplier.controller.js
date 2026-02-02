@@ -2,8 +2,31 @@ const supplierService = require("../services/supplier.service");
 
 const getSuppliers = async (req, res, next) => {
   try {
-    const suppliers = await supplierService.getAllSuppliers();
-    res.json(suppliers);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const status = req.query.status || "active";
+
+    let where = {};
+
+    // Status filter
+    if (status === "active") where.active = true;
+    if (status === "inactive") where.active = false;
+
+    // Sort by name
+    const sort = req.query.sort || "name";
+    const order = req.query.order === "desc" ? "desc" : "asc";
+    let orderBy = [];
+    if (sort === "name") orderBy = [{ name: order }];
+
+    const [suppliers, total] = await Promise.all([
+      supplierService.getAllSuppliers({ skip, take: limit, where, orderBy }),
+      supplierService.countSuppliers(where), // Count total suppliers
+    ]);
+
+    const pages = Math.ceil(total / limit);
+    res.json({ data: suppliers, page, pages, total });
   } catch (error) {
     next(error);
   }
@@ -14,17 +37,6 @@ const getSupplier = async (req, res, next) => {
     const id = Number(req.params.id);
     const supplier = await supplierService.getSupplierById(id);
     res.json(supplier);
-  } catch (error) {
-    next(error);
-  }
-};
-
-// getproductsBySupplierId
-const getProductsBySupplierId = async (req, res, next) => {
-  try {
-    const id = Number(req.params.id);
-    const products = await supplierService.getProductsBySupplierId(id);
-    res.json(products);
   } catch (error) {
     next(error);
   }
@@ -97,7 +109,6 @@ const deleteSupplierById = async (req, res, next) => {
 module.exports = {
   getSuppliers,
   getSupplier,
-  getProductsBySupplierId,
   getOrdersBySupplierId,
   createSupplier,
   createFullSupplier, // USE CASE
