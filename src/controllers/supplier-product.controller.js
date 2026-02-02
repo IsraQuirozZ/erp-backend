@@ -19,10 +19,21 @@ const getSupplierProductById = async (req, res, next) => {
   }
 };
 
+const getComponentsBySupplierId = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const components =
+      await supplierProductService.getComponentsBySupplierId(id);
+    res.json(components);
+  } catch (error) {
+    next(error);
+  }
+};
+
 const createSupplierProduct = async (req, res, next) => {
   try {
     const product = await supplierProductService.createSupplierProduct(
-      req.body
+      req.body,
     );
     res.json(product);
   } catch (error) {
@@ -35,7 +46,7 @@ const updateSupplierProductById = async (req, res, next) => {
     const id = Number(req.params.id);
     const product = await supplierProductService.updateSupplierProductById(
       id,
-      req.body
+      req.body,
     );
     res.json(product);
   } catch (error) {
@@ -59,6 +70,7 @@ const deleteSupplierProductById = async (req, res, next) => {
 module.exports = {
   getAllSupplierProducts,
   getSupplierProductById,
+  getComponentsBySupplierId,
   createSupplierProduct,
   updateSupplierProductById,
   deleteSupplierProductById,

@@ -1,7 +1,7 @@
 const {
   phoneRegex,
   emailRegex,
-  onlyLettersAndNumbersRegex,
+  onlyNumbersRegex,
 } = require("../utils/regex.utils");
 const { validateStringField } = require("../utils/validators.utils");
 
@@ -141,6 +141,12 @@ const validateCreateFullClient = (req, res, next) => {
       .json({ error: "Client, Address and Province are required" });
   }
 
+  if (client.created_at !== undefined || client.updated_at !== undefined) {
+    return res
+      .status(400)
+      .json({ error: "Created and updated timestamps must not be provided" });
+  }
+
   if (
     province.id_province !== undefined ||
     address.id_address !== undefined ||
@@ -185,7 +191,7 @@ const validateCreateFullClient = (req, res, next) => {
       });
     }
 
-    // ACTIVE
+    // ACTIVE -> OPTIONAL, DEFAULT: TRUE
     if (client.active !== undefined && typeof client.active !== "boolean") {
       return res.status(400).json({ error: "Active must be a boolean value" });
     }
@@ -204,7 +210,16 @@ const validateCreateFullClient = (req, res, next) => {
     });
 
     // NUMBER
-    address.number = validateStringField(address.number, "St. Number");
+    address.number = validateStringField(address.number, "St. Number", {
+      onlyNumbers: true,
+    });
+
+    // MUNICIPALITY
+    address.municipality = validateStringField(
+      address.municipality,
+      "Municipality",
+      { onlyLetters: true },
+    );
 
     // PORTAL -> OPTIONAL
     address.portal = validateStringField(address.portal, "Portal", {
@@ -220,12 +235,6 @@ const validateCreateFullClient = (req, res, next) => {
     address.door = validateStringField(address.door, "Door", {
       required: false,
     });
-
-    // MUNICIPALITY
-    address.municipality = validateStringField(
-      address.municipality,
-      "Municipality",
-    );
 
     // POSTAL_CODE
     if (
@@ -276,6 +285,12 @@ const validateUpdateFullClient = (req, res, next) => {
     });
   }
 
+  if (client.created_at !== undefined || client.updated_at !== undefined) {
+    return res
+      .status(400)
+      .json({ error: "Created and updated timestamps must not be provided" });
+  }
+
   try {
     // CLIENT
     client.firstName = validateStringField(client.firstName, "First name", {
@@ -314,7 +329,9 @@ const validateUpdateFullClient = (req, res, next) => {
 
     // ADDRESS
     address.street = validateStringField(address.street, "Street");
-    address.number = validateStringField(address.number, "Street number");
+    address.number = validateStringField(address.number, "Street number", {
+      onlyNumbers: true,
+    });
 
     address.portal = validateStringField(address.portal, "Portal", {
       required: false,

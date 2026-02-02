@@ -3,21 +3,26 @@ const { Prisma } = require("@prisma/client");
 const provinceService = require("../services/province.service");
 const addressService = require("../services/address.service");
 
-const getAllSuppliers = async () => {
+const getAllSuppliers = async ({ skip, take, where, orderBy }) => {
   return prisma.supplier.findMany({
-    where: { active: true },
-    orderBy: {
-      // name: "asc",
-      id_supplier: "asc",
-    },
+    where: where || {},
+    skip,
+    take,
+    orderBy: orderBy || { name: "asc" },
     include: { address: { include: { province: true } } },
+  });
+};
+
+const countSuppliers = async (where) => {
+  return await prisma.supplier.count({
+    where: where || {},
   });
 };
 
 const getSupplierById = async (id) => {
   const supplier = await prisma.supplier.findUnique({
     where: { id_supplier: id },
-    include: { address: true },
+    include: { address: { include: { province: true } } },
   });
 
   if (!supplier) {
@@ -28,26 +33,6 @@ const getSupplierById = async (id) => {
   }
 
   return supplier;
-};
-
-// getProductsBySupplierId
-const getProductsBySupplierId = async (id) => {
-  const supplier = await prisma.supplier.findUnique({
-    where: { id_supplier: id },
-  });
-
-  if (!supplier) {
-    throw {
-      status: 400,
-      message: "Supplier not found",
-    };
-  }
-
-  const products = await prisma.supplierProduct.findMany({
-    where: { id_supplier: id },
-  });
-
-  return products;
 };
 
 // getOrdersBySupplierId
@@ -271,14 +256,15 @@ const deleteSupplierById = async (id) => {
   }
 
   // If products -> Don't delete
-  const countProducts = await prisma.supplierProduct.count({
-    where: { id_supplier: id, active: true },
+  const countComponents = await prisma.component.count({
+    where: { id_supplier: id },
   });
 
-  if (countProducts > 0) {
+  if (countComponents > 0) {
     throw {
       status: 409,
-      message: "Supplier can not be deleted because it has associated products",
+      message:
+        "Supplier can not be deleted because it has associated components",
     };
   }
 
@@ -294,17 +280,23 @@ const deleteSupplierById = async (id) => {
     };
   }
 
+  if (!supplier.active) {
+    return await prisma.supplier.update({
+      where: { id_supplier: id },
+      data: { active: true },
+    });
+  }
+
   return await prisma.supplier.update({
     where: { id_supplier: id },
-    include: { address: true },
     data: { active: false },
   });
 };
 
 module.exports = {
   getAllSuppliers,
+  countSuppliers,
   getSupplierById,
-  getProductsBySupplierId,
   getOrdersBySupplierId,
   createSupplier,
   createFullSupplier, // USE CASE
