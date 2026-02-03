@@ -11,17 +11,14 @@ const validateCreateSupplierProduct = async (req, res, next) => {
       .json({ error: "Supplier Product ID must not be provided" });
   }
 
-  const { name, purchase_price, description, active, id_supplier } = req.body;
+  const { name, price, description, active, id_supplier } = req.body;
 
   try {
     // NAME
     req.body.name = validateStringField(name, "Name");
 
-    // PURCHASE_PRICES
-    req.body.purchase_price = validateDecimalField(
-      purchase_price,
-      "Purchase Price",
-    );
+    // PRICE
+    req.body.price = validateDecimalField(price, "Price");
 
     // DESCRIPTION -> OPTIONAL
     req.body.description = validateStringField(description, "Description", {
@@ -59,11 +56,11 @@ const validateUpdateSupplierProduct = async (req, res, next) => {
     return res.status(400).json({ error: "The supplier can not be updated" });
   }
 
-  const { name, purchase_price, description, active } = req.body;
+  const { name, price, description, active } = req.body;
 
   if (
     name === undefined &&
-    purchase_price === undefined &&
+    price === undefined &&
     description === undefined &&
     active === undefined
   ) {
@@ -80,11 +77,8 @@ const validateUpdateSupplierProduct = async (req, res, next) => {
     }
 
     // PURCHASE_PRICES
-    if (purchase_price !== undefined) {
-      req.body.purchase_price = validateDecimalField(
-        purchase_price,
-        "Purchase Price",
-      );
+    if (price !== undefined) {
+      req.body.price = validateDecimalField(price, "Purchase Price");
     }
 
     // DESCRIPTION

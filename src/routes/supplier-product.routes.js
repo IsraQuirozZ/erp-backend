@@ -14,7 +14,7 @@ router.get("/:id", supplierProductController.getSupplierProductById);
 
 // getProductsBySupplierId
 router.get(
-  "/:id/components",
+  "/supplier/:id",
   supplierProductController.getComponentsBySupplierId,
 );
 
