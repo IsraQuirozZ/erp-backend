@@ -1,7 +1,7 @@
 const prisma = require("../config/prisma");
 
 const getAllSupplierProducts = async () => {
-  return await prisma.supplierProduct.findMany({
+  return await prisma.component.findMany({
     where: { active: true },
     orderBy: {
       // name: "asc",
@@ -11,8 +11,8 @@ const getAllSupplierProducts = async () => {
   });
 };
 
-const getSupplierProductById = async (id) => {
-  const product = await prisma.supplierProduct.findUnique({
+const getSupplierProductsById = async (id) => {
+  const product = await prisma.component.findUnique({
     where: { id_supplier_product: id },
     include: { supplier: true },
   });
@@ -27,7 +27,10 @@ const getSupplierProductById = async (id) => {
   return product;
 };
 
-const getComponentsBySupplierId = async (id) => {
+const getComponentsBySupplierId = async (
+  id,
+  { skip, take, where, orderBy },
+) => {
   const supplier = await prisma.supplier.findUnique({
     where: { id_supplier: id },
   });
@@ -39,12 +42,19 @@ const getComponentsBySupplierId = async (id) => {
     };
   }
 
-  const components = await prisma.component.findMany({
-    where: { id_supplier: id },
-    orderBy: { id_component: "asc" },
+  return await prisma.component.findMany({
+    where: where || {},
+    skip,
+    take,
+    orderBy: orderBy || { name: "asc" },
     include: { supplier: true },
   });
-  return components;
+};
+
+const countComponents = async (where) => {
+  return await prisma.component.count({
+    where: where || {},
+  });
 };
 
 const createSupplierProduct = async (data) => {
@@ -60,7 +70,7 @@ const createSupplierProduct = async (data) => {
       };
     }
 
-    return await prisma.supplierProduct.create({
+    return await prisma.component.create({
       data,
       include: { supplier: true },
     });
@@ -78,7 +88,7 @@ const createSupplierProduct = async (data) => {
 
 const updateSupplierProductById = async (id, data) => {
   try {
-    const product = await prisma.supplierProduct.findUnique({
+    const product = await prisma.component.findUnique({
       where: { id_supplier_product: id },
     });
 
@@ -96,7 +106,7 @@ const updateSupplierProductById = async (id, data) => {
       };
     }
 
-    const updatedProduct = await prisma.supplierProduct.update({
+    const updatedProduct = await prisma.component.update({
       where: { id_supplier_product: id },
       include: { supplier: true },
       data: data,
@@ -129,7 +139,7 @@ const updateSupplierProductById = async (id, data) => {
 // Logical deletion: the record is marked as inactive instead of being physically removed
 // Can not be deleted if it has associated records (orders,etc)
 const deleteSupplierProductById = async (id) => {
-  const product = await prisma.supplierProduct.findUnique({
+  const product = await prisma.component.findUnique({
     where: { id_supplier_product: id },
   });
 
@@ -140,7 +150,7 @@ const deleteSupplierProductById = async (id) => {
     };
   }
 
-  return await prisma.supplierProduct.update({
+  return await prisma.component.update({
     where: { id_supplier_product: id },
     include: { supplier: true },
     data: { active: false },
@@ -149,8 +159,9 @@ const deleteSupplierProductById = async (id) => {
 
 module.exports = {
   getAllSupplierProducts,
-  getSupplierProductById,
+  getSupplierProductsById,
   getComponentsBySupplierId,
+  countComponents,
   createSupplierProduct,
   updateSupplierProductById,
   deleteSupplierProductById,
