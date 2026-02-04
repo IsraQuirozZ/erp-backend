@@ -10,7 +10,7 @@ const {
 router.get("/", supplierProductController.getAllSupplierProducts);
 
 // getProductById
-router.get("/:id", supplierProductController.getSupplierProductById);
+router.get("/:id", supplierProductController.getComponentById);
 
 // getProductsBySupplierId
 router.get(
@@ -29,10 +29,10 @@ router.post(
 router.put(
   "/:id",
   validateUpdateSupplierProduct,
-  supplierProductController.updateSupplierProductById,
+  supplierProductController.updateComponentById,
 );
 
 // softDeleteSupplierProductById
-router.delete("/:id", supplierProductController.deleteSupplierProductById);
+router.delete("/:id", supplierProductController.deleteComponentById);
 
 module.exports = router;

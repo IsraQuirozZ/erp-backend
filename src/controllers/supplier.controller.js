@@ -99,7 +99,7 @@ const deleteSupplierById = async (req, res, next) => {
     const id = Number(req.params.id);
     const supplier = await supplierService.deleteSupplierById(id);
     res.json({
-      message: `Supplier --${supplier.name}-- with ID ${supplier.id_supplier} successfully deleted`,
+      message: `Supplier (${supplier.name}) ${supplier.active ? "activated" : "deactivated"} successfully`,
     });
   } catch (error) {
     next(error);
