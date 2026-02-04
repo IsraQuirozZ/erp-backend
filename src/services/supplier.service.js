@@ -255,16 +255,16 @@ const deleteSupplierById = async (id) => {
     };
   }
 
-  // If products -> Don't delete
+  // If products (active) -> Don't delete
   const countComponents = await prisma.component.count({
-    where: { id_supplier: id },
+    where: { id_supplier: id, active: true },
   });
 
   if (countComponents > 0) {
     throw {
       status: 409,
       message:
-        "Supplier can not be deleted because it has associated components",
+        "Cannot change supplier status due to associated active components.",
     };
   }
 

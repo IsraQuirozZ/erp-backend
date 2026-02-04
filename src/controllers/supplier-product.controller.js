@@ -9,11 +9,11 @@ const getAllSupplierProducts = async (req, res, next) => {
   }
 };
 
-const getSupplierProductById = async (req, res, next) => {
+const getComponentById = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
-    const product = await supplierProductService.getSupplierProductById(id);
-    res.json(product);
+    const component = await supplierProductService.getComponentById(id);
+    res.json(component);
   } catch (error) {
     next(error);
   }
@@ -67,26 +67,26 @@ const createSupplierProduct = async (req, res, next) => {
   }
 };
 
-const updateSupplierProductById = async (req, res, next) => {
+const updateComponentById = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
-    const product = await supplierProductService.updateSupplierProductById(
+    const component = await supplierProductService.updateComponentById(
       id,
       req.body,
     );
-    res.json(product);
+    res.json(component);
   } catch (error) {
     next(error);
   }
 };
 
 // Soft Delete -> active: false
-const deleteSupplierProductById = async (req, res, next) => {
+const deleteComponentById = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
-    const product = await supplierProductService.deleteSupplierProductById(id);
+    const product = await supplierProductService.deleteComponentById(id);
     res.json({
-      message: `Supplier Product --${product.name}-- with ID ${product.id_supplier_product} successfully deleted`,
+      message: `Product: (${product.name}) ${product.active ? "activated" : "deactivated"} successfully`,
     });
   } catch (error) {
     next(error);
@@ -95,9 +95,9 @@ const deleteSupplierProductById = async (req, res, next) => {
 
 module.exports = {
   getAllSupplierProducts,
-  getSupplierProductById,
+  getComponentById,
   getComponentsBySupplierId,
   createSupplierProduct,
-  updateSupplierProductById,
-  deleteSupplierProductById,
+  updateComponentById,
+  deleteComponentById,
 };

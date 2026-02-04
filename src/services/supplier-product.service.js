@@ -5,26 +5,26 @@ const getAllSupplierProducts = async () => {
     where: { active: true },
     orderBy: {
       // name: "asc",
-      id_supplier_product: "asc",
+      id_component: "asc",
     },
     include: { supplier: true },
   });
 };
 
-const getSupplierProductsById = async (id) => {
-  const product = await prisma.component.findUnique({
-    where: { id_supplier_product: id },
+const getComponentById = async (id) => {
+  const component = await prisma.component.findUnique({
+    where: { id_component: id },
     include: { supplier: true },
   });
 
-  if (!product) {
+  if (!component) {
     throw {
       status: 404,
       message: "Supplier product not found",
     };
   }
 
-  return product;
+  return component;
 };
 
 const getComponentsBySupplierId = async (
@@ -43,7 +43,7 @@ const getComponentsBySupplierId = async (
   }
 
   return await prisma.component.findMany({
-    where: where || {},
+    where: { ...where, id_supplier: id },
     skip,
     take,
     orderBy: orderBy || { name: "asc" },
@@ -86,13 +86,13 @@ const createSupplierProduct = async (data) => {
   }
 };
 
-const updateSupplierProductById = async (id, data) => {
+const updateComponentById = async (id, data) => {
   try {
-    const product = await prisma.component.findUnique({
-      where: { id_supplier_product: id },
+    const component = await prisma.component.findUnique({
+      where: { id_component: id },
     });
 
-    if (!product) {
+    if (!component) {
       throw {
         status: 404,
         message: "Supplier product not found",
@@ -106,14 +106,14 @@ const updateSupplierProductById = async (id, data) => {
       };
     }
 
-    const updatedProduct = await prisma.component.update({
-      where: { id_supplier_product: id },
+    const updatedComponent = await prisma.component.update({
+      where: { id_component: id },
       include: { supplier: true },
       data: data,
     });
 
     const supplier = await prisma.supplier.findUnique({
-      where: { id_supplier: updatedProduct.id_supplier },
+      where: { id_supplier: updatedComponent.id_supplier },
     });
 
     if (supplier.active !== true) {
@@ -124,7 +124,7 @@ const updateSupplierProductById = async (id, data) => {
       };
     }
 
-    return updatedProduct;
+    return updatedComponent;
   } catch (error) {
     if (error.code === "P2002") {
       throw {
@@ -138,31 +138,46 @@ const updateSupplierProductById = async (id, data) => {
 
 // Logical deletion: the record is marked as inactive instead of being physically removed
 // Can not be deleted if it has associated records (orders,etc)
-const deleteSupplierProductById = async (id) => {
-  const product = await prisma.component.findUnique({
-    where: { id_supplier_product: id },
+// We use toggle active to false
+const deleteComponentById = async (id) => {
+  const component = await prisma.component.findUnique({
+    where: { id_component: id },
+    include: { supplier: true },
   });
 
-  if (!product) {
+  if (!component) {
     throw {
       status: 404,
       message: "Supplier Product not found",
     };
   }
 
+  if (!component.active) {
+    if (component.supplier.active !== true) {
+      throw {
+        status: 409,
+        message:
+          "Cannot change product status if the associated supplier is inactive.",
+      };
+    }
+    return await prisma.component.update({
+      where: { id_component: id },
+      data: { active: true },
+    });
+  }
+
   return await prisma.component.update({
-    where: { id_supplier_product: id },
-    include: { supplier: true },
+    where: { id_component: id },
     data: { active: false },
   });
 };
 
 module.exports = {
   getAllSupplierProducts,
-  getSupplierProductsById,
+  getComponentById,
   getComponentsBySupplierId,
   countComponents,
   createSupplierProduct,
-  updateSupplierProductById,
-  deleteSupplierProductById,
+  updateComponentById,
+  deleteComponentById,
 };
