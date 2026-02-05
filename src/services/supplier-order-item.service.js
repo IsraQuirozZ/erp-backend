@@ -1,6 +1,22 @@
 const prisma = require("../config/prisma");
 
 // Items from an order managed in: supplier-order
+const getItemsBySupplierOrder = async (id) => {
+  const order = await prisma.supplierOrder.findUnique({
+    where: { id_supplier_order: id },
+  });
+
+  if (!order) {
+    throw {
+      status: 400,
+      message: "Supplier Order not found",
+    };
+  }
+  return (items = await prisma.supplierOrderItem.findMany({
+    where: { id_supplier_order: id },
+    include: { component: true },
+  }));
+};
 
 // getSupplierOrderItemById -> Just for admin (debug)
 const getSupplierOrderItemsById = async (id) => {
@@ -181,6 +197,7 @@ const recalculateOrderTotal = async (orderId) => {
 };
 
 module.exports = {
+  getItemsBySupplierOrder,
   getSupplierOrderItemsById,
   createSupplierOrderItem,
   updateSupplierOrderItemById,
