@@ -1,12 +1,20 @@
 const prisma = require("../config/prisma");
 
-const getAllSupplierOrders = async () => {
+const getAllSupplierOrders = async ({ skip, take, where, orderBy }) => {
   return await prisma.supplierOrder.findMany({
-    where: { active: true },
-    orderBy: {
+    where: where || {},
+    skip,
+    take,
+    orderBy: orderBy || {
       created_at: "asc",
     },
     include: { supplier: true },
+  });
+};
+
+const countOrders = async (where) => {
+  return await prisma.supplierOrder.count({
+    where: where || {},
   });
 };
 
@@ -24,27 +32,6 @@ const getSupplierOrderById = async (id) => {
   }
 
   return order;
-};
-
-// getItemsBySupplierOrder
-const getItemsBySupplierOrder = async (orderId) => {
-  const order = await prisma.supplierOrder.findUnique({
-    where: { id_supplier_order: orderId },
-  });
-
-  if (!order) {
-    throw {
-      status: 400,
-      message: "Supplier Order not found",
-    };
-  }
-
-  //   `${item.supplier_product.name} ${item.unit_price} ${item.quantity} ${item.subtotal}`
-
-  return (items = await prisma.supplierOrderItem.findMany({
-    where: { id_supplier_order: orderId },
-    include: { supplier_product: true },
-  }));
 };
 
 const createSupplierOrder = async (data) => {
@@ -163,8 +150,8 @@ const deleteSupplierOrderById = async (id) => {
 
 module.exports = {
   getAllSupplierOrders,
+  countOrders,
   getSupplierOrderById,
-  getItemsBySupplierOrder,
   createSupplierOrder,
   updateSupplierOrderById,
   deleteSupplierOrderById,

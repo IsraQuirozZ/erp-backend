@@ -256,17 +256,17 @@ const deleteSupplierById = async (id) => {
   }
 
   // If products (active) -> Don't delete
-  const countComponents = await prisma.component.count({
-    where: { id_supplier: id, active: true },
-  });
+  // const countComponents = await prisma.component.count({
+  //   where: { id_supplier: id, active: true },
+  // });
 
-  if (countComponents > 0) {
-    throw {
-      status: 409,
-      message:
-        "Cannot change supplier status due to associated active components.",
-    };
-  }
+  // if (countComponents > 0) {
+  //   throw {
+  //     status: 409,
+  //     message:
+  //       "Cannot change supplier status due to associated active components.",
+  //   };
+  // }
 
   // If orders -> Don't delete
   const countOrders = await prisma.supplierOrder.count({
@@ -286,6 +286,11 @@ const deleteSupplierById = async (id) => {
       data: { active: true },
     });
   }
+
+  await prisma.component.updateMany({
+    where: { id_supplier: id },
+    data: { active: false },
+  });
 
   return await prisma.supplier.update({
     where: { id_supplier: id },

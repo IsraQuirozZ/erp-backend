@@ -1,5 +1,17 @@
 const supplierOrderItemService = require("../services/supplier-order-item.service");
 
+// getItemsBySupplierOrder
+const getItemsBySupplierOrder = async (req, res, next) => {
+  try {
+    const orderId = Number(req.params.id);
+    const orderItems =
+      await supplierOrderItemService.getItemsBySupplierOrder(orderId);
+    res.json(orderItems);
+  } catch (error) {
+    next(error);
+  }
+};
+
 const getSupplierOrderItemsById = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
@@ -49,6 +61,7 @@ const deleteSupplierOrderitemById = async (req, res, next) => {
 };
 
 module.exports = {
+  getItemsBySupplierOrder,
   getSupplierOrderItemsById,
   createSupplierOrderItem,
   updateSupplierOrderItemById,

@@ -12,21 +12,18 @@ router.get("/", supplierOrderController.getAllSupplierOrders);
 // getAOrderbyId
 router.get("/:id", supplierOrderController.getSupplierOrderById);
 
-// getItemsBySupplierOrder
-router.get("/:id/items", supplierOrderController.getItemsBySupplierOrder);
-
 // createSupplierOrder
 router.post(
   "/",
   validateCreateSupplierOrder,
-  supplierOrderController.createSupplierOrder
+  supplierOrderController.createSupplierOrder,
 );
 
 // updateOrderById
 router.put(
   "/:id",
   validateUpdateSupplierOrder,
-  supplierOrderController.updateSupplierOrderById
+  supplierOrderController.updateSupplierOrderById,
 );
 
 // deleteOrderById -> Soft delete

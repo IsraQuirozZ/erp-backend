@@ -6,7 +6,8 @@ const {
   validateUpdateSupplierOrderItem,
 } = require("../validators/supplier-order-item.validator");
 
-// Items from an order managed in: supplier order
+// getItemsBySupplierOrder
+router.get("/items/:id", supplierOrderItemController.getItemsBySupplierOrder);
 
 // getSupplierOrderItemById -> just for admin (debug)
 router.get("/:id", supplierOrderItemController.getSupplierOrderItemsById);
@@ -15,14 +16,14 @@ router.get("/:id", supplierOrderItemController.getSupplierOrderItemsById);
 router.post(
   "/",
   validateCreateSupplierOrderitem,
-  supplierOrderItemController.createSupplierOrderItem
+  supplierOrderItemController.createSupplierOrderItem,
 );
 
 // updateSupplierOrderById
 router.put(
   "/:id",
   validateUpdateSupplierOrderItem,
-  supplierOrderItemController.updateSupplierOrderItemById
+  supplierOrderItemController.updateSupplierOrderItemById,
 );
 
 // deleteSupplierOrderItemById
