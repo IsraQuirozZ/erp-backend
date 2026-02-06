@@ -1,58 +1,84 @@
-const { onlyNumbersRegex } = require("../utils/regex.utils");
+const {
+  validateIntField,
+  validateDecimalField,
+} = require("../utils/validators.utils");
 const validateCreateSupplierOrderitem = async (req, res, next) => {
   if (req.body.id_supplier_order_item !== undefined) {
     return res
       .status(400)
-      .json({ error: "Supplier Order Item ID must be not provided" });
+      .json({ error: "Supplier Order Item ID must not be provided" });
   }
 
-  if (req.body.unit_price !== undefined || req.body.subtotal !== undefined) {
+  if (req.body.subtotal !== undefined) {
     return res.status(400).json({
       error: "Some fields are managed automatically by the system",
     });
   }
 
-  const { id_supplier_order, id_supplier_product, quantity } = req.body;
+  const {
+    id_supplier_order,
+    id_component,
+    id_supplier,
+    quantity,
+    unit_price,
+    taxes,
+    discounts,
+    component_name,
+  } = req.body;
 
-  // QUANTITY
-  // TODO: Manage Stock
-  if (
-    !quantity ||
-    typeof quantity !== "string" ||
-    quantity.trim().length === 0
-  ) {
-    return res
-      .status(400)
-      .json({ error: "Quantity must be a non-empty string" });
+  try {
+    // ID_SUPPLIER_ORDER (optional)
+    if (id_supplier_order !== undefined) {
+      req.body.id_supplier_order = validateIntField(
+        id_supplier_order,
+        "Supplier Order ID",
+      );
+    }
+
+    // ID_COMPONENT
+    req.body.id_component = validateIntField(id_component, "Component ID");
+
+    // ID_SUPPLIER (mandatory if !id_supplier_order)
+    if (!id_supplier_order) {
+      req.body.id_supplier = validateIntField(id_supplier, "Supplier ID");
+    }
+
+    // QUANTITY
+    req.body.quantity = validateIntField(quantity, "Quantity");
+
+    // UNIT_PRICE (required if component does not exist)
+    if (!id_component && !unit_price) {
+      return res.status(400).json({
+        error: "Unit Price is required if the component does not exist",
+      });
+    }
+
+    if (unit_price !== undefined) {
+      req.body.unit_price = validateDecimalField(unit_price, "Unit Price");
+    }
+
+    // COMPONENT_NAME (required if component does not exist)
+    if (!id_component && !component_name) {
+      return res.status(400).json({
+        error: "Component name is required if the component does not exist",
+      });
+    }
+
+    // TAXES (optional)
+    if (taxes !== undefined) {
+      req.body.taxes = validateDecimalField(taxes, "Taxes", {
+        required: false,
+      });
+    }
+    // DISCOUNTS (optional)
+    if (discounts !== undefined) {
+      req.body.discounts = validateDecimalField(discounts, "Discounts", {
+        required: false,
+      });
+    }
+  } catch (error) {
+    return next(error);
   }
-
-  if (!onlyNumbersRegex.test(quantity.trim())) {
-    return res.status(400).json({ error: "Quantity must contain only digits" });
-  }
-
-  if (parseInt(quantity.trim()) <= 0) {
-    return res
-      .status(400)
-      .json({ error: "Quantity must be a positive number" });
-  }
-
-  // NORMALIZE
-  req.body.quantity = parseInt(quantity.trim());
-
-  // ID_SUPPLIER_ORDER
-  if (!id_supplier_order || typeof id_supplier_order !== "number") {
-    return res
-      .status(400)
-      .json({ error: "The Supplier Order ID must be a number" });
-  }
-
-  // ID_SUPPLIER_PRODUCT
-  if (!id_supplier_product || typeof id_supplier_product !== "number") {
-    return res
-      .status(400)
-      .json({ error: "The Supplier Product ID must be a number" });
-  }
-
   next();
 };
 
