@@ -35,57 +35,86 @@ const getSupplierOrderItemsById = async (id) => {
   return orderItems;
 };
 
-// createSupplierOrderItem
-// 1. @@unique ([id_supplier_order, id_supplier_product])
+// Create Supplier Order Item
 const createSupplierOrderItem = async (data) => {
   try {
-    const supplierOrder = await prisma.supplierOrder.findUnique({
+    const order = await prisma.supplierOrder.findUnique({
       where: { id_supplier_order: data.id_supplier_order },
     });
 
-    if (!supplierOrder) {
+    if (!order) {
       throw {
         status: 400,
         message: "The supplier order provided does not exist",
       };
     }
 
-    if (supplierOrder.status !== "PENDING") {
+    if (order.status !== "PENDING") {
       throw {
         status: 409,
-        message: `Cannot add Order Item from the Order --${supplierOrder.id_supplier_order}--, status: ${supplierOrder.status}`,
+        message: `Cannot add Items to order #${order.id_supplier_order} (status: ${order.status})`,
       };
     }
 
-    const supplierProduct = await prisma.supplierProduct.findUnique({
-      where: { id_supplier_product: data.id_supplier_product },
+    const component = await prisma.component.findUnique({
+      where: { id_component: data.id_component },
     });
 
-    if (!supplierProduct) {
+    if (!component || component.active === false) {
       throw {
         status: 400,
-        message: "The supplier product provided does not exist",
+        message: "The component provided does not exist or is not active",
       };
     }
 
-    // 1.
-    if (supplierOrder.id_supplier !== supplierProduct.id_supplier) {
+    if (component.id_supplier !== order.id_supplier) {
       throw {
         status: 400,
-        message: "The product does not belong to the supplier of this order",
+        message: "The component does not belong to the supplier of this order",
       };
     }
 
-    data.unit_price = supplierProduct.purchase_price;
-    data.subtotal = data.unit_price * data.quantity;
+    const existingItem = await prisma.supplierOrderItem.findFirst({
+      where: {
+        id_supplier_order: data.id_supplier_order,
+        id_component: data.id_component,
+      },
+    });
+
+    if (existingItem) {
+      throw {
+        status: 400,
+        message: "This component is already included in the order",
+      };
+    }
+
+    // Prices
+    let unit_price = component.price;
+    let subtotal = unit_price * data.quantity;
+    if (data.taxes) {
+      subtotal += (Number(data.taxes) * subtotal) / 100;
+    }
+    if (data.discounts) {
+      subtotal -= (Number(data.discounts) * subtotal) / 100;
+    }
+
+    data.unit_price = unit_price;
+    data.subtotal = subtotal;
 
     const orderItem = await prisma.supplierOrderItem.create({
-      data,
-      include: { supplier_order: true, supplier_product: true }, // use supplier_ ... -> schema -> @references
+      data: {
+        id_supplier_order: data.id_supplier_order,
+        id_component: component.id_component,
+        quantity: data.quantity,
+        unit_price: unit_price,
+        // taxes: data.taxes,
+        // discounts: data.discounts,
+        subtotal: subtotal,
+      },
+      include: { component: true, supplier_order: true },
     });
 
-    // Recalculate Total
-    await recalculateOrderTotal(data.id_supplier_order);
+    await recalculateOrderTotal(orderItem.id_supplier_order);
 
     return orderItem;
   } catch (error) {

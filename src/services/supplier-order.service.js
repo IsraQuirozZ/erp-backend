@@ -39,10 +39,21 @@ const createSupplierOrder = async (data) => {
     where: { id_supplier: data.id_supplier },
   });
 
-  if (!supplier) {
+  if (!supplier || supplier.active === false) {
     throw {
       status: 400,
-      message: "The supplier provided does not exist",
+      message: "The supplier provided does not exist or is not active",
+    };
+  }
+
+  const supplierProducts = await prisma.component.findMany({
+    where: { id_supplier: data.id_supplier, active: true },
+  });
+
+  if (supplierProducts.length === 0) {
+    throw {
+      status: 400,
+      message: "The supplier provided does not have active products",
     };
   }
 
