@@ -117,6 +117,7 @@ model Component {
   name                String @db.VarChar(100)
   price               Decimal @db.Decimal(10,2)
   description         String? @db.VarChar(250)   
+  created_at          DateTime @default(now())
   active              Boolean @default(true)
 
   id_supplier         Int
@@ -142,6 +143,7 @@ model SupplierOrder {
   created_at              DateTime @default(now())
   updated_at              DateTime @updatedAt
   expected_delivery_date  DateTime?
+  delivery_at             DateTime?
   status                  OrderStatus @default(PENDING)
   total                   Decimal @db.Decimal(10,2) @default(0)
   active                  Boolean @default(true)
@@ -154,6 +156,8 @@ model SupplierOrder {
 
 model SupplierOrderItem {
   quantity                Int
+  taxes                   Decimal? @db.Decimal(10,2)
+  discount                Decimal? @db.Decimal(10,2)
   unit_price              Decimal @db.Decimal(10,2)
   subtotal                Decimal @db.Decimal(10,2)
 
@@ -172,6 +176,7 @@ model Product {
   name          String @db.VarChar(100)
   price         Decimal @db.Decimal(10,2)
   description   String? @db.VarChar(250)
+  created_at          DateTime @default(now())
   active        Boolean @default(true)
 
   components          ProductComponent[]
@@ -274,6 +279,7 @@ model ClientOrder {
   created_at              DateTime @default(now())
   updated_at              DateTime @updatedAt
   expected_delivery_date  DateTime?
+  delivery_at             DateTime?
   status                  OrderStatus @default(PENDING)
   total                   Decimal @db.Decimal(10,2) @default(0)
 
@@ -288,6 +294,8 @@ model ClientOrder {
 
 model ClientOrderItem {
   quantity                Int
+  taxes                   Decimal @db.Decimal(10,2)
+  discount                Decimal @db.Decimal(10,2)
   unit_price              Decimal @db.Decimal(10,2)
   subtotal                Decimal @db.Decimal(10,2)
 

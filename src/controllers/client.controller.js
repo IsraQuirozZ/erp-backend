@@ -91,7 +91,7 @@ const deleteClientById = async (req, res, next) => {
     const id = Number(req.params.id);
     const client = await clientService.deleteClientById(id);
     res.json({
-      message: `Client --${client.firstName} ${client.lastName}-- With ID ${client.id_client} successfully deleted`,
+      message: `Customer (${client.firstName} ${client.lastName}) ${client.active ? "activated" : "deactivated"} successfully`,
     });
   } catch (error) {
     next(error);

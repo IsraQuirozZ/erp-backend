@@ -50,7 +50,7 @@ const login = async (data) => {
   if (!user) {
     throw {
       status: 400,
-      message: "The email address or password you entered is incorrect.",
+      message: "Email address or password incorrect.",
     };
   }
 
@@ -59,7 +59,7 @@ const login = async (data) => {
   if (!isValid) {
     throw {
       status: 400,
-      message: "The email address or password you entered is incorrect.",
+      message: "Email address or password incorrect.",
     };
   }
 

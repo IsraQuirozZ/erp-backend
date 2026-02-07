@@ -42,7 +42,9 @@ const validateUpdateSupplierOrder = async (req, res, next) => {
     req.body.total !== undefined ||
     req.body.active !== undefined ||
     req.body.created_at !== undefined ||
-    req.body.updated_at !== undefined
+    req.body.updated_at !== undefined ||
+    req.body.expected_delivery_date !== undefined ||
+    req.body.delivery_at
   ) {
     return res.status(400).json({
       error: "Some fields cannot be updated",

@@ -57,6 +57,14 @@ const createSupplierOrder = async (data) => {
     };
   }
 
+  const existingOrder = await prisma.supplierOrder.findFirst({
+    where: { id_supplier: data.id_supplier, status: "PENDING", active: true },
+  });
+
+  if (existingOrder) {
+    return existingOrder;
+  }
+
   return await prisma.supplierOrder.create({
     data: {
       id_supplier: data.id_supplier,
@@ -108,7 +116,17 @@ const updateSupplierOrderById = async (id, data) => {
     }
   }
 
-  // expecte_delivery_date -> Modification no possible
+  if (order.status === "PENDING" && data.status === "CONFIRMED") {
+    const estimatedDays = 5;
+    const expectedDate = new Date();
+    expectedDate.setDate(expectedDate.getDate() + estimatedDays);
+    data.expected_delivery_date = expectedDate;
+  }
+
+  if (order.status === "CONFIRMED" && data.status === "RECEIVED") {
+    data.delivery_at = new Date();
+  }
+
   if (order.status === "CANCELLED") {
     data.expected_delivery_date = order.expected_delivery_date;
   }

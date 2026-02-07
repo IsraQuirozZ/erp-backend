@@ -255,36 +255,30 @@ const deleteSupplierById = async (id) => {
     };
   }
 
-  // If products (active) -> Don't delete
-  // const countComponents = await prisma.component.count({
-  //   where: { id_supplier: id, active: true },
-  // });
-
-  // if (countComponents > 0) {
-  //   throw {
-  //     status: 409,
-  //     message:
-  //       "Cannot change supplier status due to associated active components.",
-  //   };
-  // }
-
-  // If orders -> Don't delete
-  const countOrders = await prisma.supplierOrder.count({
-    where: { id_supplier: id },
-  });
-
-  if (countOrders > 0) {
-    throw {
-      status: 409,
-      message: "Supplier can not be deleted because it has associated orders",
-    };
-  }
-
   if (!supplier.active) {
     return await prisma.supplier.update({
       where: { id_supplier: id },
       data: { active: true },
     });
+  }
+
+  // Deactivate -> Only if it has no orders or all orders are CANCELLED or RECEIVED
+  const orders = await prisma.supplierOrder.findMany({
+    where: { id_supplier: id },
+    select: { status: true },
+  });
+
+  if (orders.length > 0) {
+    const hasInvalidStatus = orders.some(
+      (order) => order.status !== "CANCELLED" && order.status !== "RECEIVED",
+    );
+    if (hasInvalidStatus) {
+      throw {
+        status: 409,
+        message:
+          "Supplier can not be deactivated because it has orders with status other than CANCELLED or RECEIVED",
+      };
+    }
   }
 
   await prisma.component.updateMany({
