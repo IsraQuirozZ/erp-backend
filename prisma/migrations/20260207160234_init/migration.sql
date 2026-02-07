@@ -104,6 +104,7 @@ CREATE TABLE `Component` (
     `name` VARCHAR(100) NOT NULL,
     `price` DECIMAL(10, 2) NOT NULL,
     `description` VARCHAR(250) NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `active` BOOLEAN NOT NULL DEFAULT true,
     `id_supplier` INTEGER NOT NULL,
 
@@ -117,6 +118,7 @@ CREATE TABLE `SupplierOrder` (
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
     `expected_delivery_date` DATETIME(3) NULL,
+    `delivery_at` DATETIME(3) NULL,
     `status` ENUM('PENDING', 'CONFIRMED', 'RECEIVED', 'CANCELLED') NOT NULL DEFAULT 'PENDING',
     `total` DECIMAL(10, 2) NOT NULL DEFAULT 0,
     `active` BOOLEAN NOT NULL DEFAULT true,
@@ -128,6 +130,8 @@ CREATE TABLE `SupplierOrder` (
 -- CreateTable
 CREATE TABLE `SupplierOrderItem` (
     `quantity` INTEGER NOT NULL,
+    `taxes` DECIMAL(10, 2) NULL,
+    `discount` DECIMAL(10, 2) NULL,
     `unit_price` DECIMAL(10, 2) NOT NULL,
     `subtotal` DECIMAL(10, 2) NOT NULL,
     `id_supplier_order` INTEGER NOT NULL,
@@ -142,6 +146,7 @@ CREATE TABLE `Product` (
     `name` VARCHAR(100) NOT NULL,
     `price` DECIMAL(10, 2) NOT NULL,
     `description` VARCHAR(250) NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `active` BOOLEAN NOT NULL DEFAULT true,
 
     PRIMARY KEY (`id_product`)
@@ -215,6 +220,7 @@ CREATE TABLE `ClientOrder` (
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
     `expected_delivery_date` DATETIME(3) NULL,
+    `delivery_at` DATETIME(3) NULL,
     `status` ENUM('PENDING', 'CONFIRMED', 'RECEIVED', 'CANCELLED') NOT NULL DEFAULT 'PENDING',
     `total` DECIMAL(10, 2) NOT NULL DEFAULT 0,
     `id_client` INTEGER NOT NULL,
@@ -226,6 +232,8 @@ CREATE TABLE `ClientOrder` (
 -- CreateTable
 CREATE TABLE `ClientOrderItem` (
     `quantity` INTEGER NOT NULL,
+    `taxes` DECIMAL(10, 2) NOT NULL,
+    `discount` DECIMAL(10, 2) NOT NULL,
     `unit_price` DECIMAL(10, 2) NOT NULL,
     `subtotal` DECIMAL(10, 2) NOT NULL,
     `id_client_order` INTEGER NOT NULL,

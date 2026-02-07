@@ -11,6 +11,12 @@ const validateCreateSupplierProduct = async (req, res, next) => {
       .json({ error: "Supplier Product ID must not be provided" });
   }
 
+  if (req.body.created_at !== undefined || req.body.updated_at !== undefined) {
+    return res
+      .status(400)
+      .json({ error: "Created and updated timestamps must not be provided" });
+  }
+
   const { name, price, description, active, id_supplier } = req.body;
 
   try {
