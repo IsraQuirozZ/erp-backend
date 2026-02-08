@@ -130,8 +130,8 @@ CREATE TABLE `SupplierOrder` (
 -- CreateTable
 CREATE TABLE `SupplierOrderItem` (
     `quantity` INTEGER NOT NULL,
-    `taxes` DECIMAL(10, 2) NULL,
-    `discount` DECIMAL(10, 2) NULL,
+    `tax` DECIMAL(10, 2) NOT NULL DEFAULT 0,
+    `discount` DECIMAL(10, 2) NOT NULL DEFAULT 0,
     `unit_price` DECIMAL(10, 2) NOT NULL,
     `subtotal` DECIMAL(10, 2) NOT NULL,
     `id_supplier_order` INTEGER NOT NULL,
@@ -232,8 +232,8 @@ CREATE TABLE `ClientOrder` (
 -- CreateTable
 CREATE TABLE `ClientOrderItem` (
     `quantity` INTEGER NOT NULL,
-    `taxes` DECIMAL(10, 2) NOT NULL,
-    `discount` DECIMAL(10, 2) NOT NULL,
+    `tax` DECIMAL(10, 2) NOT NULL DEFAULT 0,
+    `discount` DECIMAL(10, 2) NOT NULL DEFAULT 0,
     `unit_price` DECIMAL(10, 2) NOT NULL,
     `subtotal` DECIMAL(10, 2) NOT NULL,
     `id_client_order` INTEGER NOT NULL,

@@ -156,8 +156,8 @@ model SupplierOrder {
 
 model SupplierOrderItem {
   quantity                Int
-  taxes                   Decimal? @db.Decimal(10,2)
-  discount                Decimal? @db.Decimal(10,2)
+  tax                     Decimal @db.Decimal(10,2) @default(0)
+  discount                Decimal @db.Decimal(10,2) @default(0)
   unit_price              Decimal @db.Decimal(10,2)
   subtotal                Decimal @db.Decimal(10,2)
 
@@ -294,8 +294,8 @@ model ClientOrder {
 
 model ClientOrderItem {
   quantity                Int
-  taxes                   Decimal @db.Decimal(10,2)
-  discount                Decimal @db.Decimal(10,2)
+  tax                     Decimal @db.Decimal(10,2)@default(0)
+  discount                Decimal @db.Decimal(10,2)@default(0)
   unit_price              Decimal @db.Decimal(10,2)
   subtotal                Decimal @db.Decimal(10,2)
 

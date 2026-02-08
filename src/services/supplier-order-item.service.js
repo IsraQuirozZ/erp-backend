@@ -1,7 +1,7 @@
 const prisma = require("../config/prisma");
 
-// Items from an order managed in: supplier-order
-const getItemsBySupplierOrder = async (id) => {
+// GET ITEMS BY SUPPLIER ORDER
+const getItemsBySupplierOrder = async (id, { skip, take, orderBy } = {}) => {
   const order = await prisma.supplierOrder.findUnique({
     where: { id_supplier_order: id },
   });
@@ -12,10 +12,23 @@ const getItemsBySupplierOrder = async (id) => {
       message: "Supplier Order not found",
     };
   }
-  return (items = await prisma.supplierOrderItem.findMany({
+
+  return await prisma.supplierOrderItem.findMany({
     where: { id_supplier_order: id },
     include: { component: true },
-  }));
+    skip,
+    take,
+    orderBy: orderBy || {
+      component: { name: "asc" },
+    },
+  });
+};
+
+// Count Items in order
+const countItemsBySupplierOrder = async (id) => {
+  return await prisma.supplierOrderItem.count({
+    where: { id_supplier_order: id },
+  });
 };
 
 // getSupplierOrderItemById -> Just for admin (debug)
@@ -35,11 +48,19 @@ const getSupplierOrderItemsById = async (id) => {
   return orderItems;
 };
 
-// Create Supplier Order Item
+// Create (UPSERT) Supplier Order Item
 const createSupplierOrderItem = async (data) => {
   try {
+    const {
+      id_supplier_order,
+      id_component,
+      quantity,
+      tax = 0,
+      discount = 0,
+    } = data;
+
     const order = await prisma.supplierOrder.findUnique({
-      where: { id_supplier_order: data.id_supplier_order },
+      where: { id_supplier_order },
     });
 
     if (!order) {
@@ -57,7 +78,7 @@ const createSupplierOrderItem = async (data) => {
     }
 
     const component = await prisma.component.findUnique({
-      where: { id_component: data.id_component },
+      where: { id_component },
     });
 
     if (!component || component.active === false) {
@@ -70,53 +91,53 @@ const createSupplierOrderItem = async (data) => {
     if (component.id_supplier !== order.id_supplier) {
       throw {
         status: 400,
-        message: "The component does not belong to the supplier of this order",
+        message: "The component does not belong to this supplier",
       };
     }
 
-    const existingItem = await prisma.supplierOrderItem.findFirst({
+    const unitPrice = component.price;
+
+    // UPSERT item
+    const item = await prisma.supplierOrderItem.upsert({
       where: {
-        id_supplier_order: data.id_supplier_order,
-        id_component: data.id_component,
+        id_supplier_order_id_component: {
+          id_supplier_order,
+          id_component,
+        },
+      },
+      create: {
+        quantity,
+        unit_price: unitPrice,
+        tax,
+        discount,
+        subtotal:
+          unitPrice * quantity +
+          (unitPrice * quantity * tax) / 100 -
+          (unitPrice * quantity * discount) / 100,
+
+        // CONECT RELATIONS
+        supplier_order: {
+          connect: { id_supplier_order },
+        },
+        component: {
+          connect: { id_component },
+        },
+      },
+      update: {
+        quantity: {
+          increment: quantity,
+        },
+        subtotal: {
+          increment:
+            unitPrice * quantity +
+            (unitPrice * quantity * tax) / 100 -
+            (unitPrice * quantity * discount) / 100,
+        },
       },
     });
 
-    if (existingItem) {
-      throw {
-        status: 400,
-        message: "This component is already included in the order",
-      };
-    }
-
-    // Prices
-    let unit_price = component.price;
-    let subtotal = unit_price * data.quantity;
-    if (data.taxes) {
-      subtotal += (Number(data.taxes) * subtotal) / 100;
-    }
-    if (data.discounts) {
-      subtotal -= (Number(data.discounts) * subtotal) / 100;
-    }
-
-    data.unit_price = unit_price;
-    data.subtotal = subtotal;
-
-    const orderItem = await prisma.supplierOrderItem.create({
-      data: {
-        id_supplier_order: data.id_supplier_order,
-        id_component: component.id_component,
-        quantity: data.quantity,
-        unit_price: unit_price,
-        // taxes: data.taxes,
-        // discounts: data.discounts,
-        subtotal: subtotal,
-      },
-      include: { component: true, supplier_order: true },
-    });
-
-    await recalculateOrderTotal(orderItem.id_supplier_order);
-
-    return orderItem;
+    await recalculateOrderTotal(id_supplier_order);
+    return item;
   } catch (error) {
     if (error.code === "P2002") {
       throw {
@@ -176,15 +197,24 @@ const updateSupplierOrderItemById = async (id, data) => {
   return updatedItem;
 };
 
-const deleteSupplierOrderItemById = async (id) => {
+// DELETE -> Only if order is PENDING
+const deleteSupplierOrderItemById = async ({
+  id_supplier_order,
+  id_component,
+}) => {
   const orderItem = await prisma.supplierOrderItem.findUnique({
-    where: { id_supplier_order_item: id },
-    include: { supplier_order: true },
+    where: {
+      id_supplier_order_id_component: {
+        id_supplier_order: id_supplier_order,
+        id_component: id_component,
+      },
+    },
+    include: { supplier_order: true, component: true },
   });
 
   if (!orderItem) {
     throw {
-      status: 400,
+      status: 404,
       message: "Supplier order item not found",
     };
   }
@@ -193,13 +223,18 @@ const deleteSupplierOrderItemById = async (id) => {
   if (orderItem.supplier_order.status !== "PENDING") {
     throw {
       status: 409,
-      message: `Cannot delete Order Item from the Order --${orderItem.supplier_order.id_supplier_order}--, status: ${orderItem.supplier_order.status}`,
+      message: `Cannot delete Item from the Order #${orderItem.supplier_order.id_supplier_order} (status: ${orderItem.supplier_order.status})`,
     };
   }
 
   const deletedItem = await prisma.supplierOrderItem.delete({
-    where: { id_supplier_order_item: id },
-    include: { supplier_product: true, supplier_order: true },
+    where: {
+      id_supplier_order_id_component: {
+        id_supplier_order,
+        id_component,
+      },
+    },
+    include: { component: true, supplier_order: true },
   });
 
   // Recalculate Total
@@ -208,6 +243,7 @@ const deleteSupplierOrderItemById = async (id) => {
   return deletedItem;
 };
 
+// RECALCULATE ORDER TOTAL
 const recalculateOrderTotal = async (orderId) => {
   // Get all items
   items = await prisma.supplierOrderItem.findMany({
@@ -227,6 +263,7 @@ const recalculateOrderTotal = async (orderId) => {
 
 module.exports = {
   getItemsBySupplierOrder,
+  countItemsBySupplierOrder,
   getSupplierOrderItemsById,
   createSupplierOrderItem,
   updateSupplierOrderItemById,
