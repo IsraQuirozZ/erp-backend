@@ -24,14 +24,28 @@ const validateCreateSupplierOrderItem = async (req, res, next) => {
     // QUANTITY
     req.body.quantity = validateIntField(quantity, "Quantity");
 
-    // TAXES (optional)
+    // TAXES
     if (tax !== undefined) {
-      req.body.tax = Number(tax);
+      const t = Number(tax);
+      if (Number.isNaN(t) || t < 0 || t > 100) {
+        throw {
+          status: 400,
+          message: "Taxes must be a number between 0 and 100",
+        };
+      }
+      req.body.tax = t;
     }
 
-    // DISCOUNTS (optional)
+    // DISCOUNTS
     if (discount !== undefined) {
-      req.body.discount = Number(discount);
+      const d = Number(discount);
+      if (Number.isNaN(d) || d < 0 || d > 100) {
+        throw {
+          status: 400,
+          message: "Discounts must be a number between 0 and 100",
+        };
+      }
+      req.body.discount = d;
     }
   } catch (error) {
     return next(error);
@@ -39,36 +53,49 @@ const validateCreateSupplierOrderItem = async (req, res, next) => {
   next();
 };
 
-// Update just the field quantity
-// TODO: Update if Products are updated && Order: PENDING -> in productService
+// UPDATE VALIDATOR
 const validateUpdateSupplierOrderItem = async (req, res, next) => {
-  if (req.body.id_supplier_order_item !== undefined) {
-    return res
-      .status(400)
-      .json({ error: "Supplier Order Item ID must not be provided" });
-  }
-
-  if (
-    req.body.id_supplier_order !== undefined ||
-    req.body.id_supplier_product !== undefined ||
-    req.body.unit_price !== undefined ||
-    req.body.subtotal !== undefined
-  ) {
+  if (req.body.unit_price !== undefined || req.body.subtotal !== undefined) {
     return res.status(400).json({
-      error: "Only quantity can be updated for order items",
+      error: "Some fields are managed automatically by the system",
     });
   }
+  const { quantity, tax, discount } = req.body;
 
-  const { quantity } = req.body;
-
-  if (quantity === undefined) {
+  if (quantity === undefined && tax === undefined && discount === undefined) {
     return res.status(400).json({
-      error: "Quantity field must be provided to update the order item",
+      error:
+        "At least one field (quantity, tax, discount) must be provided for update",
     });
   }
 
   try {
-    req.body.quantity = validateIntField(quantity, "Quantity");
+    // QUANTITY
+    if (quantity !== undefined) {
+      req.body.quantity = validateIntField(quantity, "Quantity");
+    }
+
+    // TAX (optional, 0–100)
+    if (tax !== undefined) {
+      const t = Number(tax);
+      if (Number.isNaN(t) || t < 0 || t > 100) {
+        return res.status(400).json({
+          error: "Tax must be a number between 0 and 100",
+        });
+      }
+      req.body.tax = t;
+    }
+
+    // DISCOUNT (optional, 0–100)
+    if (discount !== undefined) {
+      const d = Number(discount);
+      if (Number.isNaN(d) || d < 0 || d > 100) {
+        return res.status(400).json({
+          error: "Discount must be a number between 0 and 100",
+        });
+      }
+      req.body.discount = d;
+    }
   } catch (error) {
     return next(error);
   }

@@ -40,6 +40,7 @@ const getSupplierOrderItemsById = async (req, res, next) => {
   }
 };
 
+// CREATE (UPSERT)
 const createSupplierOrderItem = async (req, res, next) => {
   try {
     const orderItem = await supplierOrderItemService.createSupplierOrderItem(
@@ -51,11 +52,17 @@ const createSupplierOrderItem = async (req, res, next) => {
   }
 };
 
+// UPDATE
 const updateSupplierOrderItemById = async (req, res, next) => {
   try {
-    const id = Number(req.params.id);
+    const id_supplier_order = Number(req.params.id_supplier_order);
+    const id_component = Number(req.params.id_component);
     const orderItem =
-      await supplierOrderItemService.updateSupplierOrderItemById(id, req.body);
+      await supplierOrderItemService.updateSupplierOrderItemById(
+        id_supplier_order,
+        id_component,
+        req.body,
+      );
     res.json(orderItem);
   } catch (error) {
     next(error);
