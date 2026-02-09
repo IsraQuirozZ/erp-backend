@@ -13,7 +13,10 @@ router.get(
 );
 
 // getSupplierOrderItemById -> just for admin (debug)
-router.get("/:id", supplierOrderItemController.getSupplierOrderItemsById);
+router.get(
+  "/:id_supplier_order/:id_component",
+  supplierOrderItemController.getSupplierOrderItemsById,
+);
 
 // createSupplierOrderItem
 router.post(
@@ -24,7 +27,7 @@ router.post(
 
 // updateSupplierOrderById
 router.put(
-  "/:id",
+  "/:id_supplier_order/:id_component",
   validateUpdateSupplierOrderItem,
   supplierOrderItemController.updateSupplierOrderItemById,
 );

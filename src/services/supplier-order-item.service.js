@@ -97,6 +97,26 @@ const createSupplierOrderItem = async (data) => {
 
     const unitPrice = component.price;
 
+    const existingItem = await prisma.supplierOrderItem.findUnique({
+      where: {
+        id_supplier_order_id_component: {
+          id_supplier_order,
+          id_component,
+        },
+      },
+    });
+
+    // Final quantity
+    const finalQuantity = existingItem
+      ? existingItem.quantity + quantity
+      : quantity;
+
+    //Recalculate subtotal
+    const base = unitPrice * finalQuantity;
+    const taxAmount = (base * tax) / 100;
+    const discountAmount = (base * discount) / 100;
+    const subtotal = base + taxAmount - discountAmount;
+
     // UPSERT item
     const item = await prisma.supplierOrderItem.upsert({
       where: {
@@ -106,14 +126,11 @@ const createSupplierOrderItem = async (data) => {
         },
       },
       create: {
-        quantity,
+        quantity: finalQuantity,
         unit_price: unitPrice,
         tax,
         discount,
-        subtotal:
-          unitPrice * quantity +
-          (unitPrice * quantity * tax) / 100 -
-          (unitPrice * quantity * discount) / 100,
+        subtotal,
 
         // CONECT RELATIONS
         supplier_order: {
@@ -124,15 +141,10 @@ const createSupplierOrderItem = async (data) => {
         },
       },
       update: {
-        quantity: {
-          increment: quantity,
-        },
-        subtotal: {
-          increment:
-            unitPrice * quantity +
-            (unitPrice * quantity * tax) / 100 -
-            (unitPrice * quantity * discount) / 100,
-        },
+        quantity: finalQuantity,
+        tax,
+        discount,
+        subtotal,
       },
     });
 
@@ -149,11 +161,26 @@ const createSupplierOrderItem = async (data) => {
   }
 };
 
-// Update if Products are updated && Order: PENDING
-const updateSupplierOrderItemById = async (id, data) => {
+// Update Supplier Order Item (inline edit) - Order must be PENDING
+const updateSupplierOrderItemById = async (
+  id_supplier_order,
+  id_component,
+  data,
+) => {
+  const { quantity, tax = 0, discount = 0 } = data;
+
+  // 1. Get existing order item
   const orderItem = await prisma.supplierOrderItem.findUnique({
-    where: { id_supplier_order_item: id },
-    include: { supplier_product: true, supplier_order: true },
+    where: {
+      id_supplier_order_id_component: {
+        id_supplier_order,
+        id_component,
+      },
+    },
+    include: {
+      supplier_order: true,
+      component: true,
+    },
   });
 
   if (!orderItem) {
@@ -163,36 +190,51 @@ const updateSupplierOrderItemById = async (id, data) => {
     };
   }
 
-  const supplierProduct = await prisma.supplierProduct.findUnique({
-    where: { id_supplier_product: orderItem.id_supplier_product },
-  });
-
-  // ORDER STATUS !== PENDING -> Can't update
+  // 2. Order must be PENDING
   if (orderItem.supplier_order.status !== "PENDING") {
     throw {
       status: 409,
-      message: `Cannot update Order Item from the Order --${orderItem.supplier_order.id_supplier_order}--, status: ${orderItem.supplier_order.status}`,
+      message: `Cannot update Items from Order #${orderItem.supplier_order.id_supplier_order} (status: ${orderItem.supplier_order.status})`,
     };
   }
 
-  // Re-calculate subtotal
-  const quantity =
-    data.quantity !== undefined ? data.quantity : orderItem.quantity;
+  // 3. Determine final values
+  const finalQuantity = quantity !== undefined ? quantity : orderItem.quantity;
 
-  const unitPrice = supplierProduct.purchase_price;
+  const finalTax = tax !== undefined ? tax : orderItem.tax;
 
+  const finalDiscount = discount !== undefined ? discount : orderItem.discount;
+
+  const unitPrice = Number(orderItem.unit_price);
+
+  // 4. Recalculate subtotal (FULL calculation)
+  const base = unitPrice * finalQuantity;
+  const taxAmount = (base * finalTax) / 100;
+  const discountAmount = (base * finalDiscount) / 100;
+  const subtotal = base + taxAmount - discountAmount;
+
+  // 5. Update item
   const updatedItem = await prisma.supplierOrderItem.update({
-    where: { id_supplier_order_item: id },
-    data: {
-      quantity,
-      unit_price: unitPrice,
-      subtotal: unitPrice * quantity,
+    where: {
+      id_supplier_order_id_component: {
+        id_supplier_order,
+        id_component,
+      },
     },
-    include: { supplier_order: true, supplier_product: true },
+    data: {
+      quantity: finalQuantity,
+      tax: finalTax,
+      discount: finalDiscount,
+      subtotal,
+    },
+    include: {
+      supplier_order: true,
+      component: true,
+    },
   });
 
-  // Recalculate Total
-  await recalculateOrderTotal(updatedItem.id_supplier_order);
+  // 6. Recalculate order total
+  await recalculateOrderTotal(id_supplier_order);
 
   return updatedItem;
 };
