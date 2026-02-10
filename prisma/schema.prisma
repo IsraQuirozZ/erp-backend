@@ -49,6 +49,7 @@ model Client {
   address   Address @relation(fields: [id_address], references: [id_address])
 
   orders  ClientOrder[]
+  clientInvoices  ClientInvoice[]
 }
 
 model Supplier {
@@ -65,6 +66,7 @@ model Supplier {
 
   components    Component[]
   orders        SupplierOrder[]
+  supplierInvoices SupplierInvoice[]
 }
 
 model Department {
