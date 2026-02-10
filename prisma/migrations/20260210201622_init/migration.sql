@@ -57,7 +57,7 @@ CREATE TABLE `Supplier` (
 CREATE TABLE `Department` (
     `id_department` INTEGER NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(100) NOT NULL,
-    `desc` VARCHAR(250) NULL,
+    `description` VARCHAR(250) NULL,
 
     UNIQUE INDEX `Department_name_key`(`name`),
     PRIMARY KEY (`id_department`)
@@ -175,12 +175,12 @@ CREATE TABLE `Warehouse` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `SupplierProductInventory` (
+CREATE TABLE `ComponentInventory` (
     `current_stock` INTEGER NOT NULL,
     `max_stock` INTEGER NOT NULL,
     `min_stock` INTEGER NOT NULL,
-    `last_updated` DATETIME(3) NOT NULL,
     `active` BOOLEAN NOT NULL DEFAULT true,
+    `last_updated` DATETIME(3) NOT NULL,
     `id_component` INTEGER NOT NULL,
     `id_warehouse` INTEGER NOT NULL,
 
@@ -188,16 +188,17 @@ CREATE TABLE `SupplierProductInventory` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `ProductInventory` (
-    `current_stock` INTEGER NOT NULL,
-    `max_stock` INTEGER NOT NULL,
-    `min_stock` INTEGER NOT NULL,
-    `last_updated` DATETIME(3) NOT NULL,
-    `active` BOOLEAN NOT NULL DEFAULT true,
-    `id_product` INTEGER NOT NULL,
+CREATE TABLE `InventoryMovement` (
+    `id_inventory_movement` INTEGER NOT NULL AUTO_INCREMENT,
+    `movement_type` ENUM('IN', 'OUT', 'ADJUSTMENT') NOT NULL,
+    `quantity` INTEGER NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `id_component` INTEGER NOT NULL,
     `id_warehouse` INTEGER NOT NULL,
+    `id_supplier_order` INTEGER NULL,
+    `id_client_order` INTEGER NULL,
 
-    PRIMARY KEY (`id_product`, `id_warehouse`)
+    PRIMARY KEY (`id_inventory_movement`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
@@ -240,6 +241,38 @@ CREATE TABLE `ClientOrderItem` (
     `id_product` INTEGER NOT NULL,
 
     PRIMARY KEY (`id_client_order`, `id_product`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `SupplierInvoice` (
+    `id_supplier_invoice` INTEGER NOT NULL AUTO_INCREMENT,
+    `invoice_number` VARCHAR(50) NOT NULL,
+    `invoice_date` DATETIME(3) NOT NULL,
+    `total` DECIMAL(10, 2) NOT NULL,
+    `status` ENUM('DRAFT', 'ISSUED', 'PAID', 'CANCELLED') NOT NULL DEFAULT 'DRAFT',
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
+    `id_supplier` INTEGER NOT NULL,
+    `id_supplier_order` INTEGER NOT NULL,
+
+    UNIQUE INDEX `SupplierInvoice_invoice_number_id_supplier_key`(`invoice_number`, `id_supplier`),
+    PRIMARY KEY (`id_supplier_invoice`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `ClientInvoice` (
+    `id_client_invoice` INTEGER NOT NULL AUTO_INCREMENT,
+    `invoice_number` VARCHAR(50) NOT NULL,
+    `invoice_date` DATETIME(3) NOT NULL,
+    `total` DECIMAL(10, 2) NOT NULL,
+    `status` ENUM('DRAFT', 'ISSUED', 'PAID', 'CANCELLED') NOT NULL DEFAULT 'DRAFT',
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
+    `id_client` INTEGER NOT NULL,
+    `id_client_order` INTEGER NOT NULL,
+
+    UNIQUE INDEX `ClientInvoice_invoice_number_id_client_key`(`invoice_number`, `id_client`),
+    PRIMARY KEY (`id_client_invoice`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
@@ -349,16 +382,22 @@ ALTER TABLE `ProductComponent` ADD CONSTRAINT `ProductComponent_id_component_fke
 ALTER TABLE `Warehouse` ADD CONSTRAINT `Warehouse_id_address_fkey` FOREIGN KEY (`id_address`) REFERENCES `Address`(`id_address`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `SupplierProductInventory` ADD CONSTRAINT `SupplierProductInventory_id_component_fkey` FOREIGN KEY (`id_component`) REFERENCES `Component`(`id_component`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `ComponentInventory` ADD CONSTRAINT `ComponentInventory_id_component_fkey` FOREIGN KEY (`id_component`) REFERENCES `Component`(`id_component`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `SupplierProductInventory` ADD CONSTRAINT `SupplierProductInventory_id_warehouse_fkey` FOREIGN KEY (`id_warehouse`) REFERENCES `Warehouse`(`id_warehouse`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `ComponentInventory` ADD CONSTRAINT `ComponentInventory_id_warehouse_fkey` FOREIGN KEY (`id_warehouse`) REFERENCES `Warehouse`(`id_warehouse`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `ProductInventory` ADD CONSTRAINT `ProductInventory_id_product_fkey` FOREIGN KEY (`id_product`) REFERENCES `Product`(`id_product`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `InventoryMovement` ADD CONSTRAINT `InventoryMovement_id_component_fkey` FOREIGN KEY (`id_component`) REFERENCES `Component`(`id_component`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `ProductInventory` ADD CONSTRAINT `ProductInventory_id_warehouse_fkey` FOREIGN KEY (`id_warehouse`) REFERENCES `Warehouse`(`id_warehouse`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `InventoryMovement` ADD CONSTRAINT `InventoryMovement_id_warehouse_fkey` FOREIGN KEY (`id_warehouse`) REFERENCES `Warehouse`(`id_warehouse`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `InventoryMovement` ADD CONSTRAINT `InventoryMovement_id_supplier_order_fkey` FOREIGN KEY (`id_supplier_order`) REFERENCES `SupplierOrder`(`id_supplier_order`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `InventoryMovement` ADD CONSTRAINT `InventoryMovement_id_client_order_fkey` FOREIGN KEY (`id_client_order`) REFERENCES `ClientOrder`(`id_client_order`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Shipment` ADD CONSTRAINT `Shipment_id_warehouse_fkey` FOREIGN KEY (`id_warehouse`) REFERENCES `Warehouse`(`id_warehouse`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -374,6 +413,18 @@ ALTER TABLE `ClientOrderItem` ADD CONSTRAINT `ClientOrderItem_id_client_order_fk
 
 -- AddForeignKey
 ALTER TABLE `ClientOrderItem` ADD CONSTRAINT `ClientOrderItem_id_product_fkey` FOREIGN KEY (`id_product`) REFERENCES `Product`(`id_product`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `SupplierInvoice` ADD CONSTRAINT `SupplierInvoice_id_supplier_fkey` FOREIGN KEY (`id_supplier`) REFERENCES `Supplier`(`id_supplier`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `SupplierInvoice` ADD CONSTRAINT `SupplierInvoice_id_supplier_order_fkey` FOREIGN KEY (`id_supplier_order`) REFERENCES `SupplierOrder`(`id_supplier_order`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `ClientInvoice` ADD CONSTRAINT `ClientInvoice_id_client_fkey` FOREIGN KEY (`id_client`) REFERENCES `Client`(`id_client`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `ClientInvoice` ADD CONSTRAINT `ClientInvoice_id_client_order_fkey` FOREIGN KEY (`id_client_order`) REFERENCES `ClientOrder`(`id_client_order`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `UserRole` ADD CONSTRAINT `UserRole_id_user_fkey` FOREIGN KEY (`id_user`) REFERENCES `User`(`id_user`) ON DELETE CASCADE ON UPDATE CASCADE;

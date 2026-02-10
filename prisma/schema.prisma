@@ -25,7 +25,6 @@ model Address {
   municipality    String @db.VarChar(150)
   postal_code     String @db.VarChar(10)
 
-  // FK
   id_province   Int
   province      Province @relation(fields: [id_province], references: [id_province])
 
@@ -49,7 +48,8 @@ model Client {
   id_address Int
   address   Address @relation(fields: [id_address], references: [id_address])
 
-  clientOrders  ClientOrder[]
+  orders  ClientOrder[]
+  clientInvoices  ClientInvoice[]
 }
 
 model Supplier {
@@ -64,14 +64,15 @@ model Supplier {
   id_address    Int
   address       Address @relation(fields: [id_address], references: [id_address])
 
-  components        Component[]
-  supplierOrders    SupplierOrder[]
+  components    Component[]
+  orders        SupplierOrder[]
+  supplierInvoices SupplierInvoice[]
 }
 
 model Department {
   id_department   Int @id @default(autoincrement())
   name            String @unique @db.VarChar(100)
-  desc            String? @db.VarChar(250)
+  description     String? @db.VarChar(250)
 
   employees       Employee[]
 }
@@ -123,9 +124,10 @@ model Component {
   id_supplier         Int
   supplier            Supplier @relation(fields: [id_supplier], references: [id_supplier])     
 
-  components          ProductComponent[]
+  productComponents   ProductComponent[]
   supplierOrderItems  SupplierOrderItem[]
-  inventories         SupplierProductInventory[]
+  inventories         ComponentInventory[]
+  movements           InventoryMovement[]
 
   @@unique([id_supplier, name])      
 
@@ -148,10 +150,12 @@ model SupplierOrder {
   total                   Decimal @db.Decimal(10,2) @default(0)
   active                  Boolean @default(true)
 
-  id_supplier       Int
-  supplier          Supplier @relation(fields: [id_supplier], references: [id_supplier])
+  id_supplier   Int
+  supplier      Supplier @relation(fields: [id_supplier], references: [id_supplier])
 
-  items             SupplierOrderItem[]
+  items         SupplierOrderItem[]
+  movements     InventoryMovement[]
+  invoices      SupplierInvoice[]
 }
 
 model SupplierOrderItem {
@@ -176,12 +180,11 @@ model Product {
   name          String @db.VarChar(100)
   price         Decimal @db.Decimal(10,2)
   description   String? @db.VarChar(250)
-  created_at          DateTime @default(now())
+  created_at    DateTime @default(now())
   active        Boolean @default(true)
 
-  components          ProductComponent[]
-  inventories         ProductInventory[]
-  clientOrderItems    ClientOrderItem[]
+  components    ProductComponent[]
+  orderItems    ClientOrderItem[]
 }
 
 model ProductComponent {
@@ -215,17 +218,17 @@ model Warehouse {
 
   @@unique([id_address, name])
 
-  supplierProductInventories SupplierProductInventory[]
-  productInventories         ProductInventory[]
-  shipments                  Shipment[]
+  inventories ComponentInventory[]
+  movements   InventoryMovement[]
+  shipments   Shipment[]
 }
 
-model SupplierProductInventory {
+model ComponentInventory {
   current_stock   Int 
   max_stock       Int
   min_stock       Int
-  last_updated    DateTime @updatedAt
   active          Boolean @default(true)
+  last_updated    DateTime @updatedAt
 
   id_component    Int
   component       Component @relation(fields: [id_component], references: [id_component])
@@ -236,20 +239,29 @@ model SupplierProductInventory {
   @@id([id_component, id_warehouse])
 }
 
-model ProductInventory {
-  current_stock   Int 
-  max_stock       Int
-  min_stock       Int
-  last_updated    DateTime @updatedAt
-  active          Boolean @default(true)
+enum InventoryMovementType {
+  IN
+  OUT
+  ADJUSTMENT
+}
 
-  id_product  Int
-  product     Product @relation(fields: [id_product], references: [id_product])
+model InventoryMovement {
+  id_inventory_movement Int @id @default(autoincrement())
+  movement_type         InventoryMovementType
+  quantity              Int
+  created_at            DateTime @default(now())
 
-  id_warehouse        Int
-  warehouse           Warehouse @relation(fields: [id_warehouse], references: [id_warehouse])
+  id_component Int
+  component    Component @relation(fields: [id_component], references: [id_component])
 
-  @@id([id_product, id_warehouse])
+  id_warehouse Int
+  warehouse    Warehouse @relation(fields: [id_warehouse], references: [id_warehouse])
+
+  id_supplier_order Int?
+  supplier_order    SupplierOrder? @relation(fields: [id_supplier_order], references: [id_supplier_order])
+
+  id_client_order Int?
+  client_order    ClientOrder? @relation(fields: [id_client_order], references: [id_client_order])
 }
 
 enum ShipmentStatus {
@@ -290,6 +302,9 @@ model ClientOrder {
   shipment        Shipment? @relation(fields: [id_shipment], references: [id_shipment])
 
   items           ClientOrderItem[]
+  movements       InventoryMovement[]
+  invoices        ClientInvoice[]
+
 }
 
 model ClientOrderItem {
@@ -306,8 +321,56 @@ model ClientOrderItem {
   product                Product @relation(fields: [id_product], references: [id_product])
 
   @@id([id_client_order, id_product])
-
 }
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  CANCELLED
+}
+
+model SupplierInvoice {
+  id_supplier_invoice Int @id @default(autoincrement())
+
+  invoice_number String @db.VarChar(50)
+  invoice_date   DateTime
+  total          Decimal @db.Decimal(10,2)
+  status         InvoiceStatus @default(DRAFT)
+
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  id_supplier    Int
+  supplier       Supplier @relation(fields: [id_supplier], references: [id_supplier])
+
+  id_supplier_order Int
+  supplier_order    SupplierOrder @relation(fields: [id_supplier_order], references: [id_supplier_order])
+
+  @@unique([invoice_number, id_supplier])
+}
+
+model ClientInvoice {
+  id_client_invoice Int @id @default(autoincrement())
+
+  invoice_number String @db.VarChar(50)
+  invoice_date   DateTime
+  total          Decimal @db.Decimal(10,2)
+  status         InvoiceStatus @default(DRAFT)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  id_client Int
+  client    Client @relation(fields: [id_client], references: [id_client])
+
+  id_client_order Int
+  client_order    ClientOrder @relation(fields: [id_client_order], references: [id_client_order])
+
+  @@unique([invoice_number, id_client])
+}
+
+
 
 model Company {
   id_company    Int @id @default(autoincrement())

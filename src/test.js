@@ -1,52 +1,372 @@
-// Update if Products are updated && Order: PENDING
-const updateSupplierOrderItemById = async (
-  id_supplier_order,
-  id_component,
-  data,
-) => {
-  const supplierProduct = await prisma.supplierProduct.findUnique({
-    where: { id_supplier_product: orderItem.id_supplier_product },
-  });
-  const orderItem = await prisma.supplierOrderItem.findUnique({
-    where: {
-      id_supplier_order_id_component: { id_supplier_order, id_component },
-    },
-    include: { supplier_product: true, supplier_order: true },
-  });
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native"]
+}
 
-  if (!orderItem) {
-    throw {
-      status: 404,
-      message: "Supplier Order Item not found",
-    };
-  }
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
 
-  // ORDER STATUS !== PENDING -> Can't update
-  if (orderItem.supplier_order.status !== "PENDING") {
-    throw {
-      status: 409,
-      message: `Cannot update Order Item from the Order --${orderItem.supplier_order.id_supplier_order}--, status: ${orderItem.supplier_order.status}`,
-    };
-  }
+model Province {
+  id_province   Int @id @default(autoincrement())
+  name      String @unique @db.VarChar(50)
 
-  // Re-calculate subtotal
-  const quantity =
-    data.quantity !== undefined ? data.quantity : orderItem.quantity;
+  addresses Address[]
+}
 
-  const unitPrice = supplierProduct.purchase_price;
+model Address {
+  id_address      Int @id @default(autoincrement())
+  street          String @db.VarChar(150)
+  number          String @db.VarChar(10)
+  portal          String? @db.VarChar(10)
+  floor           String? @db.VarChar(10)
+  door            String? @db.VarChar(10)
+  municipality    String @db.VarChar(150)
+  postal_code     String @db.VarChar(10)
 
-  const updatedItem = await prisma.supplierOrderItem.update({
-    where: { id_supplier_order_item: id },
-    data: {
-      quantity,
-      unit_price: unitPrice,
-      subtotal: unitPrice * quantity,
-    },
-    include: { supplier_order: true, supplier_product: true },
-  });
+  // FK
+  id_province   Int
+  province      Province @relation(fields: [id_province], references: [id_province])
 
-  // Recalculate Total
-  await recalculateOrderTotal(updatedItem.id_supplier_order);
+  clients       Client[]
+  suppliers     Supplier[]
+  employees     Employee[]
+  warehouses    Warehouse[]
+}
 
-  return updatedItem;
-};
+model Client {
+  id_client Int @id @default(autoincrement())
+
+  firstName   String @db.VarChar(100)
+  lastName    String @db.VarChar(150)
+  phone       String @db.VarChar(20)
+  email       String @unique @db.VarChar(100)
+  active      Boolean @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  id_address Int
+  address   Address @relation(fields: [id_address], references: [id_address])
+
+  clientOrders  ClientOrder[]
+}
+
+model Supplier {
+  id_supplier   Int @id @default(autoincrement())
+  name          String @db.VarChar(100)
+  phone         String @db.VarChar(20)
+  email         String @unique @db.VarChar(100)
+  active        Boolean @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  id_address    Int
+  address       Address @relation(fields: [id_address], references: [id_address])
+
+  components        Component[]
+  supplierOrders    SupplierOrder[]
+}
+
+model Department {
+  id_department   Int @id @default(autoincrement())
+  name            String @unique @db.VarChar(100)
+  desc            String? @db.VarChar(250)
+
+  employees       Employee[]
+}
+
+model Employee {
+  id_employee   Int @id @default(autoincrement())
+  firstName     String @db.VarChar(100)
+  lastName      String @db.VarChar(150)
+  phone         String @db.VarChar(20)
+  email         String @unique @db.VarChar(100)
+  job_title     String @db.VarChar(100)
+  hire_date     DateTime
+  base_salary   Decimal @db.Decimal(10,2)
+  active        Boolean @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  id_address     Int
+  address       Address @relation(fields: [id_address], references: [id_address])
+
+  id_department Int
+  department    Department @relation(fields: [id_department], references: [id_department])
+
+  payrolls      Payroll[]
+}
+
+model Payroll {
+  id_payroll      Int @id @default(autoincrement())
+  period          String @db.VarChar(7)
+  base_salary     Decimal @db.Decimal(10,2)
+  overtime_hours  Decimal? @db.Decimal(6,2)
+  deductions      Decimal @db.Decimal(10,2)
+  taxes           Decimal @db.Decimal(10,2)
+  net_salary      Decimal @db.Decimal(10,2)
+  payment_date    DateTime
+
+  id_employee   Int
+  employee      Employee @relation(fields:[id_employee], references: [id_employee])
+}
+
+model Component {
+  id_component        Int @id @default(autoincrement())
+  name                String @db.VarChar(100)
+  price               Decimal @db.Decimal(10,2)
+  description         String? @db.VarChar(250)   
+  created_at          DateTime @default(now())
+  active              Boolean @default(true)
+
+  id_supplier         Int
+  supplier            Supplier @relation(fields: [id_supplier], references: [id_supplier])     
+
+  components          ProductComponent[]
+  supplierOrderItems  SupplierOrderItem[]
+  inventories         SupplierProductInventory[]
+
+  @@unique([id_supplier, name])      
+
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  RECEIVED
+  CANCELLED
+}
+
+model SupplierOrder {
+  id_supplier_order       Int @id @default(autoincrement())
+  created_at              DateTime @default(now())
+  updated_at              DateTime @updatedAt
+  expected_delivery_date  DateTime?
+  delivery_at             DateTime?
+  status                  OrderStatus @default(PENDING)
+  total                   Decimal @db.Decimal(10,2) @default(0)
+  active                  Boolean @default(true)
+
+  id_supplier       Int
+  supplier          Supplier @relation(fields: [id_supplier], references: [id_supplier])
+
+  items             SupplierOrderItem[]
+}
+
+model SupplierOrderItem {
+  quantity                Int
+  tax                     Decimal @db.Decimal(10,2) @default(0)
+  discount                Decimal @db.Decimal(10,2) @default(0)
+  unit_price              Decimal @db.Decimal(10,2)
+  subtotal                Decimal @db.Decimal(10,2)
+
+  id_supplier_order       Int
+  supplier_order          SupplierOrder @relation(fields: [id_supplier_order], references: [id_supplier_order])
+
+  id_component      Int
+  component         Component @relation(fields: [id_component],references: [id_component])
+
+  @@id ([id_supplier_order, id_component])
+}
+
+
+model Product {
+  id_product    Int @id @default(autoincrement())
+  name          String @db.VarChar(100)
+  price         Decimal @db.Decimal(10,2)
+  description   String? @db.VarChar(250)
+  created_at          DateTime @default(now())
+  active        Boolean @default(true)
+
+  components          ProductComponent[]
+  inventories         ProductInventory[]
+  clientOrderItems    ClientOrderItem[]
+}
+
+model ProductComponent {
+  quantity      Int
+
+  id_product    Int
+  product       Product @relation(fields: [id_product], references: [id_product])
+
+  id_component  Int
+  component     Component @relation(fields:[id_component], references: [id_component])
+
+  @@id([id_product, id_component])
+}
+
+enum WarehouseType {
+  MAIN
+  SECONDARY
+  DISTRIBUTION
+  STORE
+}
+
+model Warehouse {
+  id_warehouse    Int @id @default(autoincrement())
+  name            String @db.VarChar(100)
+  warehouse_type  WarehouseType @default(MAIN)
+  capacity        Int
+  active          Boolean @default(true)
+
+  id_address      Int
+  address         Address @relation(fields: [id_address], references: [id_address])
+
+  @@unique([id_address, name])
+
+  supplierProductInventories SupplierProductInventory[]
+  productInventories         ProductInventory[]
+  shipments                  Shipment[]
+}
+
+model SupplierProductInventory {
+  current_stock   Int 
+  max_stock       Int
+  min_stock       Int
+  last_updated    DateTime @updatedAt
+  active          Boolean @default(true)
+
+  id_component    Int
+  component       Component @relation(fields: [id_component], references: [id_component])
+
+  id_warehouse        Int
+  warehouse           Warehouse @relation(fields: [id_warehouse], references: [id_warehouse])
+
+  @@id([id_component, id_warehouse])
+}
+
+model ProductInventory {
+  current_stock   Int 
+  max_stock       Int
+  min_stock       Int
+  last_updated    DateTime @updatedAt
+  active          Boolean @default(true)
+
+  id_product  Int
+  product     Product @relation(fields: [id_product], references: [id_product])
+
+  id_warehouse        Int
+  warehouse           Warehouse @relation(fields: [id_warehouse], references: [id_warehouse])
+
+  @@id([id_product, id_warehouse])
+}
+
+enum ShipmentStatus {
+  PENDING
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+model Shipment {
+  id_shipment               Int @id @default(autoincrement())
+  shipping_company          String @db.VarChar(100)
+  shipping_cost             Decimal @db.Decimal(10,2)
+  status                    ShipmentStatus @default(PENDING)
+  shipment_date             DateTime?
+  estimated_delivery_date   DateTime?
+  actual_delivery_date      DateTime?
+
+  id_warehouse              Int
+  warehouse                 Warehouse @relation(fields: [id_warehouse], references: [id_warehouse])
+
+  clientOrders              ClientOrder[]
+}
+
+model ClientOrder {
+  id_client_order         Int @id @default(autoincrement())
+  created_at              DateTime @default(now())
+  updated_at              DateTime @updatedAt
+  expected_delivery_date  DateTime?
+  delivery_at             DateTime?
+  status                  OrderStatus @default(PENDING)
+  total                   Decimal @db.Decimal(10,2) @default(0)
+
+  id_client       Int
+  client          Client @relation(fields: [id_client], references: [id_client])
+
+  id_shipment     Int?
+  shipment        Shipment? @relation(fields: [id_shipment], references: [id_shipment])
+
+  items           ClientOrderItem[]
+}
+
+model ClientOrderItem {
+  quantity                Int
+  tax                     Decimal @db.Decimal(10,2)@default(0)
+  discount                Decimal @db.Decimal(10,2)@default(0)
+  unit_price              Decimal @db.Decimal(10,2)
+  subtotal                Decimal @db.Decimal(10,2)
+
+  id_client_order        Int
+  client_order           ClientOrder @relation(fields: [id_client_order], references: [id_client_order])
+
+  id_product      Int
+  product                Product @relation(fields: [id_product], references: [id_product])
+
+  @@id([id_client_order, id_product])
+
+}
+
+model Company {
+  id_company    Int @id @default(autoincrement())
+  name          String @db.VarChar(100)
+  tax_id        String @unique @db.VarChar(50)
+  phone         String @db.VarChar(20)
+  email         String @unique @db.VarChar(100)
+  active        Boolean @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+}
+
+model User {
+  id_user         Int @id @default(autoincrement())
+  username        String @db.VarChar(100)
+  email           String @unique @db.VarChar(100)
+  password_hash   String @db.VarChar(255)
+  active          Boolean @default(true)
+
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  deleted_at      DateTime? 
+
+  roles           UserRole[]
+}
+
+model Role {
+  id_role       Int @id @default(autoincrement())
+  name          String @unique @db.VarChar(100) 
+  description   String? @db.VarChar(250)
+
+  users         UserRole[]
+  permissions   RolePermission[]
+}
+
+model Permission {
+  id_permission   Int @id @default(autoincrement())
+  code            String @unique @db.VarChar(100)
+  description     String? @db.VarChar(250)
+
+  roles           RolePermission[]
+}
+
+model UserRole {
+  id_user   Int
+  user      User @relation(fields: [id_user], references: [id_user], onDelete: Cascade)
+
+  id_role   Int
+  role      Role @relation(fields: [id_role], references: [id_role], onDelete: Cascade)
+
+  @@id([id_user, id_role])
+}
+
+model RolePermission {
+  id_role       Int
+  role          Role @relation(fields: [id_role], references: [id_role], onDelete: Cascade)
+
+  id_permission  Int
+  permission    Permission @relation(fields: [id_permission], references: [id_permission], onDelete: Cascade)
+
+  @@id([id_role, id_permission])
+}
