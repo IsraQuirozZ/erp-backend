@@ -1,16 +1,28 @@
 const prisma = require("../config/prisma");
+const { Prisma } = require("@prisma/client");
+const provinceService = require("../services/province.service");
+const addressService = require("../services/address.service");
 
-const getAllWarehouses = async () => {
+const getAllWarehouses = async ({ skip, take, where, orderBy }) => {
   return await prisma.warehouse.findMany({
-    where: { active: true },
-    include: { address: true },
+    where: where || {},
+    skip,
+    take,
+    orderBy: orderBy || { name: "asc" },
+    include: { address: { include: { province: true } } },
+  });
+};
+
+const countWarehouses = async (where) => {
+  return await prisma.warehouse.count({
+    where: where || {},
   });
 };
 
 const getWarehouseById = async (id) => {
   const warehouse = await prisma.warehouse.findUnique({
     where: { id_warehouse: id },
-    include: { address: true },
+    include: { address: { include: { province: true } } },
   });
 
   if (!warehouse) {
@@ -23,25 +35,44 @@ const getWarehouseById = async (id) => {
   return warehouse;
 };
 
+// USE CASE
 const createWarehouse = async (data) => {
   try {
-    const address = await prisma.address.findUnique({
-      where: { id_address: data.id_address },
-    });
+    return await prisma.$transaction(async (tx) => {
+      const { warehouse, address, province } = data;
 
-    if (!address) {
-      throw {
-        status: 400,
-        message: "The Address provided does not exist",
-      };
-    }
+      // PROVINCE
+      let existingProvince = await provinceService.getProvinceByName(
+        province.name,
+        tx,
+      );
 
-    return await prisma.warehouse.create({
-      data,
-      include: { address: true },
+      if (!existingProvince) {
+        existingProvince = await provinceService.createProvince(province, tx);
+      }
+
+      // ADDRESS --> addresService
+      const newAddress = await addressService.createAddress(
+        { ...address, id_province: existingProvince.id_province },
+        tx,
+      );
+
+      // WAREHOUSE
+      const newWarehouse = await tx.warehouse.create({
+        data: {
+          ...warehouse,
+          id_address: newAddress.id_address,
+        },
+        include: { address: { include: { province: true } } },
+      });
+
+      return newWarehouse;
     });
   } catch (error) {
-    if (error.code === "P2002") {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
       throw {
         status: 409,
         message: "Warehouse name already exist for this address",
@@ -52,33 +83,74 @@ const createWarehouse = async (data) => {
 };
 
 const updateWarehouseById = async (id, data) => {
+  const { warehouse, address, province } = data;
   try {
-    const warehouse = await prisma.warehouse.findUnique({
-      where: { id_warehouse: id },
-      include: { address: true },
-    });
+    return await prisma.$transaction(async (tx) => {
+      const existingWarehouse = await tx.warehouse.findUnique({
+        where: { id_warehouse: id },
+        include: { address: { include: { province: true } } },
+      });
 
-    if (!warehouse) {
-      throw {
-        status: 404,
-        message: "Warehouse not found",
-      };
-    }
+      if (!existingWarehouse) {
+        throw {
+          status: 404,
+          message: "Warehouse not found",
+        };
+      }
 
-    if (!warehouse.active && data.active !== true) {
-      throw {
-        status: 400,
-        message: "Inactive warehouse can only be reactivated",
-      };
-    }
+      if (!existingWarehouse.active && warehouse && warehouse.active !== true) {
+        throw {
+          status: 400,
+          message: "Inactive warehouse can only be reactivated",
+        };
+      }
 
-    return await prisma.warehouse.update({
-      where: { id_warehouse: id },
-      data,
-      include: { address: true },
+      let existingProvince;
+      if (province && province.name) {
+        existingProvince = await provinceService.getProvinceByName(
+          province.name,
+          tx,
+        );
+
+        if (!existingProvince) {
+          existingProvince = await provinceService.createProvince(province, tx);
+        }
+      }
+
+      let updatedAddress;
+      if (address) {
+        updatedAddress = await tx.address.update({
+          where: { id_address: existingWarehouse.id_address },
+          data: {
+            ...address,
+            id_province: existingProvince
+              ? existingProvince.id_province
+              : existingWarehouse.address.id_province,
+          },
+        });
+      }
+
+      const updatedWarehouse = await tx.warehouse.update({
+        where: { id_warehouse: id },
+        data: {
+          ...(warehouse || {}),
+        },
+        include: {
+          address: {
+            include: {
+              province: true,
+            },
+          },
+        },
+      });
+
+      return updatedWarehouse;
     });
   } catch (error) {
-    if (error.code === "P2002") {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
       throw {
         status: 400,
         message: "Warehouse with this name already exist for this address",
@@ -101,15 +173,24 @@ const deleteWarehouseById = async (id) => {
     };
   }
 
+  if (!warehouse.active) {
+    return await prisma.warehouse.update({
+      where: { id_warehouse: id },
+      data: { active: true },
+    });
+  }
+
+  // TODO: If products
+
   return await prisma.warehouse.update({
     where: { id_warehouse: id },
-    include: { address: true },
     data: { active: false },
   });
 };
 
 module.exports = {
   getAllWarehouses,
+  countWarehouses,
   getWarehouseById,
   createWarehouse,
   updateWarehouseById,

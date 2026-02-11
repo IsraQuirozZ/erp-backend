@@ -4,7 +4,7 @@ const provinceService = require("../services/province.service");
 const addressService = require("../services/address.service");
 
 const getAllSuppliers = async ({ skip, take, where, orderBy }) => {
-  return prisma.supplier.findMany({
+  return await prisma.supplier.findMany({
     where: where || {},
     skip,
     take,
@@ -192,23 +192,28 @@ const updateFullSupplier = async (id_supplier, data) => {
         };
       }
 
-      let existingProvince = await tx.province.findFirst({
-        where: { name: province.name },
-      });
+      let existingProvince;
+      if (province && province.name) {
+        existingProvince = await provinceService.getProvinceByName(
+          province.name,
+          tx,
+        );
 
-      if (!existingProvince) {
-        existingProvince = await tx.province.create({
-          data: { name: province.name },
-        });
+        if (!existingProvince) {
+          existingProvince = await provinceService.createProvince(province, tx);
+        }
       }
 
-      const updatedAddress = await tx.address.update({
-        where: { id_address: existingSupplier.id_address },
-        data: {
-          ...address,
-          id_province: existingProvince.id_province,
-        },
-      });
+      let updatedAddress;
+      if (address) {
+        updatedAddress = await tx.address.update({
+          where: { id_address: existingSupplier.id_address },
+          data: {
+            ...address,
+            id_province: existingProvince.id_province,
+          },
+        });
+      }
 
       const updatedSupplier = await tx.supplier.update({
         where: { id_supplier },
