@@ -1,52 +1,62 @@
-const validateCreateWarehouse = async (req, res, next) => {
-  if (req.body.id_warehouse !== undefined) {
-    return res
-      .status(400)
-      .json({ error: "The Warehouse ID must be not provided" });
+// UPDATE SUPPLIER ORDER -> If Transaction RECEIVED -> Create movements in inventory, create/update componentInventory
+const updateSupplierOrderById = async (id, data) => {
+  const order = await prisma.supplierOrder.findUnique({
+    where: { id_supplier_order: id },
+  });
+
+  if (!order) {
+    throw {
+      status: 404,
+      message: "Supplier Order not found",
+    };
   }
 
-  const { name, warehouse_type, capacity, active, id_address } = req.body;
-
-  try {
-    // NAME
-    req.body.name = validateStringField(name, "Warehouse Name");
-
-    // CAPACITY
-    req.body.capacity = validateIntField(capacity, "Capacity");
-  } catch (error) {
-    return next(error);
+  // If status: RECEIVED -> NO UPDATES ALLOWED
+  if (order.status === "RECEIVED") {
+    throw {
+      status: 409,
+      message: "A received order cannot be modified",
+    };
   }
 
-  // WAREHOUSE_TYPE
-  if (warehouse_type !== undefined) {
-    if (typeof warehouse_type !== "string") {
-      return res.status(400).json({ error: "Warehouse Type must be a string" });
+  // Status transition rules
+  if (data.status) {
+    const validTransitions = {
+      PENDING: ["CONFIRMED", "CANCELLED"],
+      CONFIRMED: ["RECEIVED"],
+      CANCELLED: [],
+    };
+
+    const allowed = validTransitions[order.status] || [];
+
+    if (!allowed.includes(data.status)) {
+      throw {
+        status: 409,
+        message: `Cannot change status from ${order.status} to ${data.status}`,
+      };
     }
-
-    const normalizedType = warehouse_type.trim().toUpperCase();
-
-    if (!Object.values(WarehouseType).includes(normalizedType)) {
-      return res.status(400).json({ error: "Invalid warehouse type" });
-    }
-
-    req.body.warehouse_type = normalizedType;
   }
 
-  // ACTIVE (OPTIONAL, DEFAULT TRUE)
-  if (active !== undefined && typeof active !== "boolean") {
-    return res.status(400).json({ error: "Active must be a boolean value" });
+  if (order.status === "PENDING" && data.status === "CONFIRMED") {
+    const estimatedDays = 5;
+    const expectedDate = new Date();
+    expectedDate.setDate(expectedDate.getDate() + estimatedDays);
+    data.expected_delivery_date = expectedDate;
   }
 
-  // ID_ADDRESS
-  if (!id_address || typeof id_address !== "number") {
-    return res
-      .status(400)
-      .json({ error: "Address ID is required and must be a number" });
+  if (order.status === "CONFIRMED" && data.status === "RECEIVED") {
+    data.delivery_at = new Date();
   }
 
-  if (active === undefined) {
-    req.body.active = true;
+  if (order.status === "CANCELLED") {
+    data.expected_delivery_date = order.expected_delivery_date;
   }
 
-  next();
+  return await prisma.supplierOrder.update({
+    where: { id_supplier_order: id },
+    data,
+    include: {
+      supplier: true,
+    },
+  });
 };

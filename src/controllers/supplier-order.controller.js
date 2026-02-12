@@ -71,9 +71,10 @@ const createSupplierOrder = async (req, res, next) => {
 const updateSupplierOrderById = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
+    const { status } = req.body;
     const order = await supplierOrderService.updateSupplierOrderById(
       id,
-      req.body,
+      status,
     );
     res.json(order);
   } catch (error) {

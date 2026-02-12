@@ -136,9 +136,7 @@ const updateComponentById = async (id, data) => {
   }
 };
 
-// Logical deletion: the record is marked as inactive instead of being physically removed
 // Can not be deleted if it has associated records (orders,etc)
-// We use toggle active to false
 const deleteComponentById = async (id) => {
   const component = await prisma.component.findUnique({
     where: { id_component: id },
