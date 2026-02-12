@@ -153,6 +153,9 @@ model SupplierOrder {
   id_supplier   Int
   supplier      Supplier @relation(fields: [id_supplier], references: [id_supplier])
 
+  id_warehouse  Int
+  warehouse     Warehouse @relation(fields: [id_warehouse], references: [id_warehouse])
+
   items         SupplierOrderItem[]
   movements     InventoryMovement[]
   invoices      SupplierInvoice[]
@@ -218,6 +221,7 @@ model Warehouse {
 
   @@unique([id_address, name])
 
+  orders      SupplierOrder[]
   inventories ComponentInventory[]
   movements   InventoryMovement[]
   shipments   Shipment[]

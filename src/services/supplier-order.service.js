@@ -21,7 +21,11 @@ const countOrders = async (where) => {
 const getSupplierOrderById = async (id) => {
   const order = await prisma.supplierOrder.findUnique({
     where: { id_supplier_order: id },
-    include: { supplier: true },
+    include: {
+      supplier: true,
+      warehouse: true,
+      invoices: true,
+    },
   });
 
   if (!order) {
@@ -34,6 +38,7 @@ const getSupplierOrderById = async (id) => {
   return order;
 };
 
+// CREATE
 const createSupplierOrder = async (data) => {
   const supplier = await prisma.supplier.findUnique({
     where: { id_supplier: data.id_supplier },
@@ -57,6 +62,17 @@ const createSupplierOrder = async (data) => {
     };
   }
 
+  const warehouse = await prisma.warehouse.findUnique({
+    where: { id_warehouse: data.id_warehouse },
+  });
+
+  if (!warehouse || warehouse.active === false) {
+    throw {
+      status: 400,
+      message: "The warehouse provided does not exist or is not active",
+    };
+  }
+
   const existingOrder = await prisma.supplierOrder.findFirst({
     where: { id_supplier: data.id_supplier, status: "PENDING", active: true },
   });
@@ -68,19 +84,23 @@ const createSupplierOrder = async (data) => {
   return await prisma.supplierOrder.create({
     data: {
       id_supplier: data.id_supplier,
+      id_warehouse: data.id_warehouse,
       status: "PENDING",
       total: 0,
       active: true,
     },
     include: {
       supplier: true,
+      warehouse: true,
     },
   });
 };
 
-const updateSupplierOrderById = async (id, data) => {
+// UPDATE
+const updateSupplierOrderById = async (id, newStatus) => {
   const order = await prisma.supplierOrder.findUnique({
     where: { id_supplier_order: id },
+    include: { items: true },
   });
 
   if (!order) {
@@ -90,7 +110,6 @@ const updateSupplierOrderById = async (id, data) => {
     };
   }
 
-  // If status: RECEIVED -> NO UPDATES ALLOWED
   if (order.status === "RECEIVED") {
     throw {
       status: 409,
@@ -98,45 +117,115 @@ const updateSupplierOrderById = async (id, data) => {
     };
   }
 
-  // Status transition rules
-  if (data.status) {
-    const validTransitions = {
-      PENDING: ["CONFIRMED", "CANCELLED"],
-      CONFIRMED: ["RECEIVED"],
-      CANCELLED: [],
+  const validTransitions = {
+    PENDING: ["CONFIRMED", "CANCELLED"],
+    CONFIRMED: ["RECEIVED"],
+    CANCELLED: [],
+  };
+
+  const allowed = validTransitions[order.status] || [];
+
+  if (!allowed.includes(newStatus)) {
+    throw {
+      status: 409,
+      message: `Cannot change status from ${order.status} to ${newStatus}`,
     };
+  }
 
-    const allowed = validTransitions[order.status] || [];
+  if (newStatus === "CONFIRMED" && order.items.length === 0) {
+    throw { status: 400, message: "Cannot confirm an order without items" };
+  }
 
-    if (!allowed.includes(data.status)) {
+  // NOT RECEIVED
+  if (!(order.status === "CONFIRMED" && newStatus === "RECEIVED")) {
+    const updateData = { status: newStatus };
+
+    if (order.status === "PENDING" && newStatus === "CONFIRMED") {
+      const estimatedDays = 5;
+      const expectedDate = new Date();
+      expectedDate.setDate(expectedDate.getDate() + estimatedDays);
+      updateData.expected_delivery_date = expectedDate;
+    }
+
+    if (newStatus === "CANCELLED") {
+      updateData.delivery_at = null;
+    }
+
+    return await prisma.supplierOrder.update({
+      where: { id_supplier_order: id },
+      data: updateData,
+      include: { supplier: true },
+    });
+  }
+
+  //  RECEIVED
+  return await prisma.$transaction(async (tx) => {
+    if (order.items.length === 0) {
       throw {
         status: 409,
-        message: `Cannot change status from ${order.status} to ${data.status}`,
+        message: "Cannot receive an order without items",
       };
     }
-  }
 
-  if (order.status === "PENDING" && data.status === "CONFIRMED") {
-    const estimatedDays = 5;
-    const expectedDate = new Date();
-    expectedDate.setDate(expectedDate.getDate() + estimatedDays);
-    data.expected_delivery_date = expectedDate;
-  }
+    const updatedOrder = await tx.supplierOrder.update({
+      where: { id_supplier_order: id },
+      data: {
+        status: "RECEIVED",
+        delivery_at: new Date(),
+      },
+      include: { items: true },
+    });
 
-  if (order.status === "CONFIRMED" && data.status === "RECEIVED") {
-    data.delivery_at = new Date();
-  }
+    const warehouseId = order.id_warehouse;
 
-  if (order.status === "CANCELLED") {
-    data.expected_delivery_date = order.expected_delivery_date;
-  }
+    for (const item of updatedOrder.items) {
+      const existingInventory = await tx.componentInventory.findUnique({
+        where: {
+          id_component_id_warehouse: {
+            id_component: item.id_component,
+            id_warehouse: warehouseId,
+          },
+        },
+      });
 
-  return await prisma.supplierOrder.update({
-    where: { id_supplier_order: id },
-    data,
-    include: {
-      supplier: true,
-    },
+      if (!existingInventory) {
+        await tx.componentInventory.create({
+          data: {
+            id_component: item.id_component,
+            id_warehouse: warehouseId,
+            current_stock: item.quantity,
+            min_stock: 0,
+            max_stock: 999999,
+          },
+        });
+      } else {
+        await tx.componentInventory.update({
+          where: {
+            id_component_id_warehouse: {
+              id_component: item.id_component,
+              id_warehouse: warehouseId,
+            },
+          },
+          data: {
+            current_stock: {
+              increment: item.quantity,
+            },
+          },
+        });
+      }
+
+      await tx.inventoryMovement.create({
+        data: {
+          movement_type: "IN",
+          quantity: item.quantity,
+          id_component: item.id_component,
+          id_warehouse: warehouseId,
+          id_supplier_order: updatedOrder.id_supplier_order,
+        },
+      });
+    }
+
+    return updatedOrder;
   });
 };
 

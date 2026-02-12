@@ -280,8 +280,7 @@ const deleteSupplierById = async (id) => {
     if (hasInvalidStatus) {
       throw {
         status: 409,
-        message:
-          "Supplier can not be deactivated because it has orders with status other than CANCELLED or RECEIVED",
+        message: `Supplier can not be deactivated because it has "PENDING" or "CONFIRMED" orders`,
       };
     }
   }
