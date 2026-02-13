@@ -35,6 +35,35 @@ const getWarehouseById = async (id) => {
   return warehouse;
 };
 
+// GET INVENTORY BY WAREHOUSE ID
+const getInventoryByWarehouseId = async (id, { skip, take, orderBy }) => {
+  const inventory = await prisma.componentInventory.findMany({
+    where: { id_warehouse: id },
+    skip,
+    take,
+    orderBy: orderBy || { component: { name: "asc" } },
+    include: { component: true },
+  });
+
+  if (!inventory) {
+    throw {
+      status: 404,
+      message: "Inventory not found for this warehouse",
+    };
+  }
+
+  return inventory;
+};
+
+const countComponentsInWarehouse = async (id) => {
+  const result = await prisma.componentInventory.aggregate({
+    where: { id_warehouse: id },
+    _sum: { current_stock: true },
+  });
+
+  return result._sum.current_stock || 0;
+};
+
 // USE CASE
 const createWarehouse = async (data) => {
   try {
@@ -192,6 +221,8 @@ module.exports = {
   getAllWarehouses,
   countWarehouses,
   getWarehouseById,
+  getInventoryByWarehouseId,
+  countComponentsInWarehouse,
   createWarehouse,
   updateWarehouseById,
   deleteWarehouseById,

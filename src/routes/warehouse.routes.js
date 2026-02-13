@@ -12,6 +12,9 @@ router.get("/", warehouseController.getAllWarehouses);
 // getWarehouseById
 router.get("/:id", warehouseController.getWarehouseById);
 
+// getInventoryByWarehouseId
+router.get("/:id/inventory", warehouseController.getInventoryByWarehouseId);
+
 // createWarehouse
 router.post("/", validateCreateWarehouse, warehouseController.createWarehouse);
 
@@ -19,7 +22,7 @@ router.post("/", validateCreateWarehouse, warehouseController.createWarehouse);
 router.put(
   "/:id",
   validateUpdateWarehouse,
-  warehouseController.updateWarehouseById
+  warehouseController.updateWarehouseById,
 );
 
 // deleteWarehouseById
