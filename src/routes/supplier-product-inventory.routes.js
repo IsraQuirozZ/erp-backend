@@ -12,10 +12,8 @@ router.get("/", supplierProductInventoryController.getAllInventories);
 // getSupplierProductInventoryById
 router.get(
   "/supplier-product/:id_supplier_product/warehouse/:id_warehouse",
-  supplierProductInventoryController.getInventory
+  supplierProductInventoryController.getInventory,
 );
-
-// getInventoryByWarehouse
 
 // getInventoryBySupplierProduct
 
@@ -23,20 +21,20 @@ router.get(
 router.post(
   "/",
   validateCreateSupplierProductInventory,
-  supplierProductInventoryController.createSupplierProductInventory
+  supplierProductInventoryController.createSupplierProductInventory,
 );
 
 // updateSupplierProductInventory
 router.put(
   "/supplier-product/:id_supplier_product/warehouse/:id_warehouse",
   validateUpdateSupplierProductInventory,
-  supplierProductInventoryController.updateInventory
+  supplierProductInventoryController.updateInventory,
 );
 
 // deleteSupplierInventory
 router.delete(
   "/supplier-product/:id_supplier_product/warehouse/:id_warehouse",
-  supplierProductInventoryController.deleteInventory
+  supplierProductInventoryController.deleteInventory,
 );
 
 module.exports = router;

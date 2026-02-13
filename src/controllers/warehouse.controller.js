@@ -42,6 +42,36 @@ const getWarehouseById = async (req, res, next) => {
   }
 };
 
+// GET INVENTORY BY WAREHOUSE ID
+const getInventoryByWarehouseId = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Sort by component name
+    const sort = req.query.sort || "component.name";
+    const order = req.query.order === "desc" ? "desc" : "asc";
+    let orderBy = [];
+    if (sort === "component.name") orderBy = [{ component: { name: order } }];
+
+    const id = Number(req.params.id);
+    const [inventory, total] = await Promise.all([
+      warehouseService.getInventoryByWarehouseId(id, {
+        skip,
+        take: limit,
+        orderBy,
+      }),
+      warehouseService.countComponentsInWarehouse(id), // Count total components in this warehouse
+    ]);
+
+    const pages = Math.ceil(total / limit);
+    res.json({ data: inventory, page, pages, total });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const createWarehouse = async (req, res, next) => {
   try {
     const warehouse = await warehouseService.createWarehouse(req.body);
@@ -76,6 +106,7 @@ const deleteWarehouseById = async (req, res, next) => {
 module.exports = {
   getAllWarehouses,
   getWarehouseById,
+  getInventoryByWarehouseId,
   createWarehouse,
   updateWarehouseById,
   deleteWarehouseById,
