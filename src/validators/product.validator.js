@@ -11,7 +11,7 @@ const validateCreateProduct = async (req, res, next) => {
       .json({ error: "The Product ID must be not provided" });
   }
 
-  const { name, price, description, active, id_supplier_product } = req.body;
+  const { name, price, description, active } = req.body;
 
   try {
     // NAME
@@ -25,12 +25,6 @@ const validateCreateProduct = async (req, res, next) => {
       required: false,
       capitalizeFirst: true,
     });
-
-    // ID_SUPPLIER
-    req.body.id_supplier_product = validateIntField(
-      id_supplier_product,
-      "Supplier Product ID",
-    );
   } catch (error) {
     return next(error);
   }
@@ -55,10 +49,6 @@ const validateUpdateProduct = async (req, res, next) => {
       .json({ error: "The Product ID must be not provided" });
   }
 
-  if (req.body.id_supplier_product !== undefined) {
-    return res.status(400).json({ error: "The supplier can not be updated" });
-  }
-
   const { name, price, description, active } = req.body;
 
   if (
@@ -68,8 +58,7 @@ const validateUpdateProduct = async (req, res, next) => {
     active === undefined
   ) {
     return res.status(400).json({
-      error:
-        "At least one field must be provided to update the supplier product",
+      error: "At least one field must be provided to update the product",
     });
   }
 

@@ -1,18 +1,28 @@
 const prisma = require("../config/prisma");
 
-const getAllProducts = async () => {
+// GET ALL PRODUCTS WITH PAGINATION, FILTERING AND SORTING
+const getAllProducts = async ({ skip, take, where, orderBy }) => {
   return await prisma.product.findMany({
-    where: { active: true },
-    // orderBy: { name: "asc" },
-    orderBy: { id_product: "asc" },
-    include: { supplierProduct: true },
+    where: where || {},
+    skip,
+    take,
+    orderBy: orderBy || { name: "asc" },
+    include: { components: true },
   });
 };
 
+// COUNT PRODUCTS
+const countProducts = async (where) => {
+  return await prisma.product.count({
+    where: where || {},
+  });
+};
+
+// GET PRODUCT BY ID
 const getProductById = async (id) => {
   const product = await prisma.product.findUnique({
     where: { id_product: id },
-    include: { supplierProduct: true },
+    include: { components: true },
   });
 
   if (!product) {
@@ -25,22 +35,12 @@ const getProductById = async (id) => {
   return product;
 };
 
+// CREATE PRODUCT
 const createProduct = async (data) => {
   try {
-    const supplierProduct = await prisma.supplierProduct.findUnique({
-      where: { id_supplier_product: data.id_supplier_product },
-    });
-
-    if (!supplierProduct) {
-      throw {
-        status: 400,
-        message: "The Supplier Product provided does not exist",
-      };
-    }
-
     return await prisma.product.create({
       data,
-      include: { supplierProduct: true },
+      include: { components: true },
     });
   } catch (error) {
     if (error.code === "P2002") {
@@ -75,7 +75,7 @@ const updateProductById = async (id, data) => {
 
   return await prisma.product.update({
     where: { id_product: id },
-    include: { supplierProduct: true },
+    include: { components: true },
     data,
   });
 };
@@ -93,15 +93,22 @@ const deleteProductById = async (id) => {
     };
   }
 
+  if (!product.active) {
+    return await prisma.product.update({
+      where: { id_product: id },
+      data: { active: true },
+    });
+  }
+
   return await prisma.product.update({
     where: { id_product: id },
-    include: { supplierProduct: true },
     data: { active: false },
   });
 };
 
 module.exports = {
   getAllProducts,
+  countProducts,
   getProductById,
   createProduct,
   updateProductById,

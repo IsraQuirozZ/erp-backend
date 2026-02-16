@@ -18,6 +18,7 @@ const validateDecimalField = (value, fieldName, { required = true } = {}) => {
     return null; // Optional y not sended -> OK
   }
 
+  value = value.toString(); // Funciona?
   // 2. Wrong Type of or empty string
   if (typeof value !== "string" || value.trim().length === 0) {
     throw {
@@ -118,7 +119,7 @@ const validateIntField = (value, fieldName, { required = true } = {}) => {
     }
     return null;
   }
-
+  value = value.toString(); // Funciona?
   if (typeof value !== "string" || value.trim().length === 0) {
     throw {
       status: 400,
