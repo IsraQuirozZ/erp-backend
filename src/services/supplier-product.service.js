@@ -4,8 +4,7 @@ const getAllSupplierProducts = async () => {
   return await prisma.component.findMany({
     where: { active: true },
     orderBy: {
-      // name: "asc",
-      id_component: "asc",
+      name: "asc",
     },
     include: { supplier: true },
   });

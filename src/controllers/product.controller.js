@@ -44,6 +44,30 @@ const getProductById = async (req, res, next) => {
   }
 };
 
+// GET COMPONENTS BY PRODUCT ID
+const getProductComponentsByProductId = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const sort = req.query.sort || "component.name";
+    const order = req.query.order === "desc" ? "desc" : "asc";
+    let orderBy = [];
+    if (sort === "component.name") orderBy = [{ component: { name: order } }];
+
+    const productId = Number(req.params.id);
+    const components = await productService.getProductComponentsByProductId(
+      productId,
+      { skip, take: limit, orderBy },
+    );
+
+    const pages = Math.ceil(components.length / limit);
+    res.json({ data: components, page, pages });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // CREATE PRODUCT
 const createProduct = async (req, res, next) => {
   try {
@@ -79,6 +103,7 @@ const deleteProductById = async (req, res, next) => {
 module.exports = {
   getAllProducts,
   getProductById,
+  getProductComponentsByProductId,
   createProduct,
   updateProductById,
   deleteProductById,

@@ -35,6 +35,33 @@ const getProductById = async (id) => {
   return product;
 };
 
+// GET COMPONENTS BY PRODUCT ID
+const getProductComponentsByProductId = async (
+  productId,
+  { skip, take, orderBy } = {},
+) => {
+  const product = await prisma.product.findUnique({
+    where: { id_product: productId },
+  });
+
+  if (!product) {
+    throw {
+      status: 404,
+      message: "Product not found",
+    };
+  }
+
+  return await prisma.productComponent.findMany({
+    where: { id_product: productId },
+    include: { component: { include: { supplier: true } } },
+    skip,
+    take,
+    orderBy: orderBy || {
+      component: { name: "asc" },
+    },
+  });
+};
+
 // CREATE PRODUCT
 const createProduct = async (data) => {
   try {
@@ -110,6 +137,7 @@ module.exports = {
   getAllProducts,
   countProducts,
   getProductById,
+  getProductComponentsByProductId,
   createProduct,
   updateProductById,
   deleteProductById,

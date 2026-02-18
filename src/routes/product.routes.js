@@ -12,6 +12,12 @@ router.get("/", productController.getAllProducts);
 // getProductById
 router.get("/:id", productController.getProductById);
 
+// getProductComponentsByProductId
+router.get(
+  "/:id/components",
+  productController.getProductComponentsByProductId,
+);
+
 // createProduct
 router.post("/", validateCreateProduct, productController.createProduct);
 
