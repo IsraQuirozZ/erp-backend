@@ -7,6 +7,25 @@ const getAllProductComponents = async () => {
   });
 };
 
+// GET PRODUCT COMPONENT BY ID
+const getProductComponentById = async (id_product, id_component) => {
+  const productComponent = await prisma.productComponent.findUnique({
+    where: {
+      id_product_id_component: { id_product, id_component },
+    },
+    include: { product: true, component: { include: { supplier: true } } },
+  });
+
+  if (!productComponent) {
+    throw {
+      status: 404,
+      message: "Product Component not found",
+    };
+  }
+
+  return productComponent;
+};
+
 // CREATE PRODUCT COMPONENT
 const createProductComponent = async (data) => {
   try {
@@ -14,10 +33,10 @@ const createProductComponent = async (data) => {
       where: { id_product: data.id_product },
     });
 
-    if (!product || product.active === false) {
+    if (!product) {
       throw {
         status: 404,
-        message: "Product not found or is not active",
+        message: "Product not found",
       };
     }
 
@@ -40,7 +59,56 @@ const createProductComponent = async (data) => {
   }
 };
 
+// UPDATE PRODUCT COMPONENT
+const updateProductComponent = async (id_product, id_component, quantity) => {
+  const productComponent = await prisma.productComponent.findUnique({
+    where: {
+      id_product_id_component: { id_product, id_component },
+    },
+  });
+
+  if (!productComponent) {
+    throw {
+      status: 404,
+      message: "Product Component not found",
+    };
+  }
+
+  return await prisma.productComponent.update({
+    where: {
+      id_product_id_component: { id_product, id_component },
+    },
+    data: { quantity },
+    include: { product: true, component: true },
+  });
+};
+
+const deleteProductComponent = async (id_product, id_component) => {
+  const productComponent = await prisma.productComponent.findUnique({
+    where: {
+      id_product_id_component: { id_product, id_component },
+    },
+  });
+
+  if (!productComponent) {
+    throw {
+      status: 404,
+      message: "Product Component not found",
+    };
+  }
+
+  return await prisma.productComponent.delete({
+    where: {
+      id_product_id_component: { id_product, id_component },
+    },
+    include: { component: true },
+  });
+};
+
 module.exports = {
   getAllProductComponents,
+  getProductComponentById,
   createProductComponent,
+  updateProductComponent,
+  deleteProductComponent,
 };

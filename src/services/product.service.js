@@ -44,16 +44,16 @@ const getProductComponentsByProductId = async (
     where: { id_product: productId },
   });
 
-  if (!product || product.active === false) {
+  if (!product) {
     throw {
       status: 404,
-      message: "Product not found or is not active",
+      message: "Product not found",
     };
   }
 
   return await prisma.productComponent.findMany({
     where: { id_product: productId },
-    include: { component: true },
+    include: { component: { include: { supplier: true } } },
     skip,
     take,
     orderBy: orderBy || {

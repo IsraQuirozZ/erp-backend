@@ -25,6 +25,26 @@ const validateCreateProductComponent = (req, res, next) => {
   next();
 };
 
+// UPDATE PRODUCT COMPONENT
+const validateUpdateProductComponent = (req, res, next) => {
+  const { quantity } = req.body;
+
+  if (quantity === undefined) {
+    return res.status(400).json({
+      message: "Missing required field: quantity",
+    });
+  }
+
+  try {
+    req.body.quantity = validateIntField(quantity, "Quantity");
+  } catch (error) {
+    next(error);
+  }
+
+  next();
+};
+
 module.exports = {
   validateCreateProductComponent,
+  validateUpdateProductComponent,
 };
