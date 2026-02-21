@@ -19,11 +19,16 @@ const validateCreateClientOrder = async (req, res, next) => {
     });
   }
 
-  const { id_client } = req.body;
+  const { id_client, id_warehouse } = req.body;
 
   // ID_CLIENT
   if (!id_client || typeof id_client !== "number") {
     return res.status(400).json({ error: "The Client ID must be a number" });
+  }
+
+  // ID_WAREHOUSE
+  if (!id_warehouse || typeof id_warehouse !== "number") {
+    return res.status(400).json({ error: "The Warehouse ID must be a number" });
   }
 
   next();
@@ -39,7 +44,6 @@ const validateUpdateClientOrder = async (req, res, next) => {
   if (
     req.body.id_client !== undefined ||
     req.body.total !== undefined ||
-    req.body.active !== undefined ||
     req.body.created_at !== undefined ||
     req.body.updated_at !== undefined ||
     req.body.expected_delivery_date !== undefined
