@@ -221,10 +221,11 @@ model Warehouse {
 
   @@unique([id_address, name])
 
-  orders      SupplierOrder[]
-  inventories ComponentInventory[]
-  movements   InventoryMovement[]
-  shipments   Shipment[]
+  orders        SupplierOrder[]
+  client_orders ClientOrder[]
+  inventories   ComponentInventory[]
+  movements     InventoryMovement[]
+  shipments     Shipment[]
 }
 
 model ComponentInventory {
@@ -304,6 +305,9 @@ model ClientOrder {
 
   id_shipment     Int?
   shipment        Shipment? @relation(fields: [id_shipment], references: [id_shipment])
+
+  id_warehouse  Int
+  warehouse     Warehouse @relation(fields: [id_warehouse], references: [id_warehouse])
 
   items           ClientOrderItem[]
   movements       InventoryMovement[]

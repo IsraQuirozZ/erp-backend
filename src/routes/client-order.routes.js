@@ -6,23 +6,20 @@ const {
   validateUpdateClientOrder,
 } = require("../validators/client-order.validator");
 
-// getAllOrders
+// getAllClientOrders
 router.get("/", clientOrderController.getAllClientOrders);
 
-// getAOrderbyId
+// getClientOrderById
 router.get("/:id", clientOrderController.getClientOrderById);
 
-// getItemsBySupplierOrder
-router.get("/:id/items", clientOrderController.getItemsByClientOrder);
-
-// createSupplierOrder
+// createClientOrder
 router.post(
   "/",
   validateCreateClientOrder,
   clientOrderController.createClientOrder,
 );
 
-// updateOrderById
+// updateClientOrderById
 router.put(
   "/:id",
   validateUpdateClientOrder,

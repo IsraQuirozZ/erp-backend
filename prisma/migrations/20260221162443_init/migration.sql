@@ -123,6 +123,7 @@ CREATE TABLE `SupplierOrder` (
     `total` DECIMAL(10, 2) NOT NULL DEFAULT 0,
     `active` BOOLEAN NOT NULL DEFAULT true,
     `id_supplier` INTEGER NOT NULL,
+    `id_warehouse` INTEGER NOT NULL,
 
     PRIMARY KEY (`id_supplier_order`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -226,6 +227,7 @@ CREATE TABLE `ClientOrder` (
     `total` DECIMAL(10, 2) NOT NULL DEFAULT 0,
     `id_client` INTEGER NOT NULL,
     `id_shipment` INTEGER NULL,
+    `id_warehouse` INTEGER NOT NULL,
 
     PRIMARY KEY (`id_client_order`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -367,6 +369,9 @@ ALTER TABLE `Component` ADD CONSTRAINT `Component_id_supplier_fkey` FOREIGN KEY 
 ALTER TABLE `SupplierOrder` ADD CONSTRAINT `SupplierOrder_id_supplier_fkey` FOREIGN KEY (`id_supplier`) REFERENCES `Supplier`(`id_supplier`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `SupplierOrder` ADD CONSTRAINT `SupplierOrder_id_warehouse_fkey` FOREIGN KEY (`id_warehouse`) REFERENCES `Warehouse`(`id_warehouse`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `SupplierOrderItem` ADD CONSTRAINT `SupplierOrderItem_id_supplier_order_fkey` FOREIGN KEY (`id_supplier_order`) REFERENCES `SupplierOrder`(`id_supplier_order`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -407,6 +412,9 @@ ALTER TABLE `ClientOrder` ADD CONSTRAINT `ClientOrder_id_client_fkey` FOREIGN KE
 
 -- AddForeignKey
 ALTER TABLE `ClientOrder` ADD CONSTRAINT `ClientOrder_id_shipment_fkey` FOREIGN KEY (`id_shipment`) REFERENCES `Shipment`(`id_shipment`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `ClientOrder` ADD CONSTRAINT `ClientOrder_id_warehouse_fkey` FOREIGN KEY (`id_warehouse`) REFERENCES `Warehouse`(`id_warehouse`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `ClientOrderItem` ADD CONSTRAINT `ClientOrderItem_id_client_order_fkey` FOREIGN KEY (`id_client_order`) REFERENCES `ClientOrder`(`id_client_order`) ON DELETE RESTRICT ON UPDATE CASCADE;

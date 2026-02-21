@@ -1,5 +1,26 @@
 const prisma = require("../config/prisma");
 
+// getItemsByClientOrder
+const getItemsByClientOrder = async (orderId) => {
+  const order = await prisma.clientOrder.findUnique({
+    where: { id_client_order: orderId },
+  });
+
+  if (!order) {
+    throw {
+      status: 404,
+      message: "Client Order not found",
+    };
+  }
+
+  //  `${item.supplier_product.name} ${item.unit_price} ${item.quantity} ${item.subtotal}`
+
+  return (items = await prisma.clientOrderItem.findMany({
+    where: { id_client_order: orderId },
+    include: { product: true },
+  }));
+};
+
 // Items from an order managed in: client-order
 
 // getSClientOrderItemById -> Just for admin (debug)
@@ -180,6 +201,7 @@ const recalculateOrderTotal = async (orderId) => {
 };
 
 module.exports = {
+  getItemsByClientOrder,
   getClientrOrderItemsById,
   createClientOrderItem,
   updateClientOrderItemById,
