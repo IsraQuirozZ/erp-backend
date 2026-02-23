@@ -1,31 +1,38 @@
 const prisma = require("../config/prisma");
 
 // getItemsByClientOrder
-const getItemsByClientOrder = async (orderId) => {
+const getItemsByClientOrder = async (id, { skip, take, orderBy } = {}) => {
   const order = await prisma.clientOrder.findUnique({
-    where: { id_client_order: orderId },
+    where: { id_client_order: id },
   });
 
   if (!order) {
     throw {
-      status: 404,
+      status: 400,
       message: "Client Order not found",
     };
   }
 
-  //  `${item.supplier_product.name} ${item.unit_price} ${item.quantity} ${item.subtotal}`
-
-  return (items = await prisma.clientOrderItem.findMany({
-    where: { id_client_order: orderId },
+  return await prisma.clientOrderItem.findMany({
+    where: { id_client_order: id },
     include: { product: true },
-  }));
+    skip,
+    take,
+    orderBy: orderBy || {
+      product: { name: "asc" },
+    },
+  });
 };
 
-// Items from an order managed in: client-order
+// Count Items in order
+const countItemsByClientOrder = async (id) => {
+  return await prisma.clientOrderItem.count({
+    where: { id_client_order: id },
+  });
+};
 
-// getSClientOrderItemById -> Just for admin (debug)
-// .../client-order/:id_client_order/product/:id_product
-const getClientrOrderItemsById = async (id_client_order, id_product) => {
+// getClientOrderItemById -> Just for admin (debug)
+const getClientOrderItemsById = async (id_client_order, id_product) => {
   const orderItems = await prisma.clientOrderItem.findUnique({
     where: { id_client_order_id_product: { id_client_order, id_product } },
     include: { client_order: true, product: true },
@@ -41,66 +48,129 @@ const getClientrOrderItemsById = async (id_client_order, id_product) => {
   return orderItems;
 };
 
-// createClientOrderItem
+// Create (UPSERT) Client Order Item
 const createClientOrderItem = async (data) => {
   try {
-    const clientOrder = await prisma.clientOrder.findUnique({
-      where: { id_client_order: data.id_client_order },
+    const {
+      id_client_order,
+      id_product,
+      quantity,
+      tax = 0,
+      discount = 0,
+    } = data;
+
+    // VALIDATE ORDER
+    const order = await prisma.clientOrder.findUnique({
+      where: { id_client_order },
     });
 
-    if (!clientOrder) {
+    if (!order) {
       throw {
         status: 400,
-        message: "The Client Order provided does not exist",
+        message: "The client order provided does not exist",
       };
     }
 
-    if (clientOrder.status !== "PENDING") {
+    if (order.status !== "PENDING") {
       throw {
         status: 409,
-        message: `Cannot add Order Item from the Order --${clientOrder.id_client_order}--, Order Status: ${clientOrder.status}`,
+        message: `Cannot add items to order #${order.id_client_order} (status: ${order.status})`,
       };
     }
 
+    // VALIDATE PRODUCT
     const product = await prisma.product.findUnique({
-      where: { id_product: data.id_product },
+      where: { id_product },
     });
 
-    if (!product || !product.active) {
+    if (!product || product.active === false) {
       throw {
         status: 400,
-        message: "The product provided does not exist or is inactive",
+        message: "The product provided does not exist or is not active",
       };
     }
 
-    data.unit_price = product.price;
-    data.subtotal = data.unit_price * data.quantity;
+    const unitPrice = Number(product.price);
 
-    const orderItem = await prisma.clientOrderItem.create({
-      data,
-      include: { client_order: true, product: true }, // use of: client_ ... -> schema -> @references
+    // CHECK EXISTING ITEM (COMPOSITE PK)
+    const existingItem = await prisma.clientOrderItem.findUnique({
+      where: {
+        id_client_order_id_product: {
+          id_client_order,
+          id_product,
+        },
+      },
     });
 
-    // Recalculate Total
-    await recalculateOrderTotal(data.id_client_order);
+    const finalQuantity = existingItem
+      ? existingItem.quantity + quantity
+      : quantity;
 
-    return orderItem;
+    // CALCULATE SUBTOTAL
+    const base = unitPrice * finalQuantity;
+    const taxAmount = (base * tax) / 100;
+    const discountAmount = (base * discount) / 100;
+    const subtotal = base + taxAmount - discountAmount;
+
+    // UPSERT
+    const item = await prisma.clientOrderItem.upsert({
+      where: {
+        id_client_order_id_product: {
+          id_client_order,
+          id_product,
+        },
+      },
+      create: {
+        quantity: finalQuantity,
+        unit_price: unitPrice,
+        tax,
+        discount,
+        subtotal,
+        client_order: {
+          connect: { id_client_order },
+        },
+        product: {
+          connect: { id_product },
+        },
+      },
+      update: {
+        quantity: finalQuantity,
+        tax,
+        discount,
+        subtotal,
+      },
+    });
+
+    await recalculateOrderTotal(id_client_order);
+
+    return item;
   } catch (error) {
     if (error.code === "P2002") {
       throw {
         status: 400,
-        message: "An order already has this supplier and supplier product",
+        message: "This product already exists in the order",
       };
     }
     throw error;
   }
 };
 
-// TODO: Update if Products are updated && Order: PENDING -> in productService
+// updateClientOrderItemById (inline edit) -> Order must be PENDING
 const updateClientOrderItemById = async (id_client_order, id_product, data) => {
+  const { quantity, tax = 0, discount = 0 } = data;
+
+  // EXISTING ITEM
   const orderItem = await prisma.clientOrderItem.findUnique({
-    where: { id_client_order_id_product: { id_client_order, id_product } },
-    include: { client_order: true, product: true },
+    where: {
+      id_client_order_id_product: {
+        id_client_order,
+        id_product,
+      },
+    },
+    include: {
+      client_order: true,
+      product: true,
+    },
   });
 
   if (!orderItem) {
@@ -110,47 +180,55 @@ const updateClientOrderItemById = async (id_client_order, id_product, data) => {
     };
   }
 
-  const product = await prisma.product.findUnique({
-    where: { id_product: orderItem.id_product },
-  });
-
-  if (!product || !product.active) {
-    throw {
-      status: 400,
-      message: "The product provided does not exist or is inactive",
-    };
-  }
-
   // ORDER STATUS !== PENDING -> Can't update
   if (orderItem.client_order.status !== "PENDING") {
     throw {
       status: 409,
-      message: `Cannot update Order Item from the Order --${orderItem.client_order.id_client_order}--, status: ${orderItem.client_order.status}`,
+      message: `Cannot update items from Order #${orderItem.client_order.id_client_order} (status: ${orderItem.client_order.status})`,
     };
   }
 
-  // Re-calculate subtotal
-  const quantity =
-    data.quantity !== undefined ? data.quantity : orderItem.quantity;
+  // FINAL VALUES
+  const finalQuantity = quantity !== undefined ? quantity : orderItem.quantity;
 
-  const unitPrice = product.price;
+  const finalTax = tax !== undefined ? tax : orderItem.tax;
 
+  const finalDiscount = discount !== undefined ? discount : orderItem.discount;
+
+  const unitPrice = Number(orderItem.unit_price);
+
+  // RECALCULATE SUBTOTAL
+  const base = unitPrice * finalQuantity;
+  const taxAmount = (base * finalTax) / 100;
+  const discountAmount = (base * finalDiscount) / 100;
+  const subtotal = base + taxAmount - discountAmount;
+
+  // UPDATE
   const updatedItem = await prisma.clientOrderItem.update({
-    where: { id_client_order_id_product: { id_client_order, id_product } },
-    data: {
-      quantity,
-      unit_price: unitPrice,
-      subtotal: unitPrice * quantity,
+    where: {
+      id_client_order_id_product: {
+        id_client_order,
+        id_product,
+      },
     },
-    include: { client_order: true, product: true },
+    data: {
+      quantity: finalQuantity,
+      tax: finalTax,
+      discount: finalDiscount,
+      subtotal,
+    },
+    include: {
+      client_order: true,
+      product: true,
+    },
   });
 
-  // Recalculate Total
-  await recalculateOrderTotal(updatedItem.id_client_order);
+  await recalculateOrderTotal(id_client_order);
 
   return updatedItem;
 };
 
+// deleteClientOrderItemById -> Only if order is PENDING
 const deleteClientOrderItemById = async (id_client_order, id_product) => {
   const orderItem = await prisma.clientOrderItem.findUnique({
     where: { id_client_order_id_product: { id_client_order, id_product } },
@@ -183,6 +261,7 @@ const deleteClientOrderItemById = async (id_client_order, id_product) => {
   return deletedItem;
 };
 
+// RECALCULATE ORDER TOTAL
 const recalculateOrderTotal = async (orderId) => {
   // Get all items
   const items = await prisma.clientOrderItem.findMany({
@@ -202,7 +281,8 @@ const recalculateOrderTotal = async (orderId) => {
 
 module.exports = {
   getItemsByClientOrder,
-  getClientrOrderItemsById,
+  countItemsByClientOrder,
+  getClientOrderItemsById,
   createClientOrderItem,
   updateClientOrderItemById,
   deleteClientOrderItemById,
