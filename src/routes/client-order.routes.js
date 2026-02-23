@@ -27,5 +27,9 @@ router.put(
 );
 
 // cancelClientOrderById
-router.delete("/:id", clientOrderController.cancelClientOrderById);
+// router.delete("/:id", clientOrderController.cancelClientOrderById);
+
+// deleteClientOrderById
+router.delete("/delete/:id", clientOrderController.deleteClientOrderById);
+
 module.exports = router;

@@ -15,7 +15,7 @@ const getAllClientOrders = async (req, res, next) => {
     // Status filter
     if (status === "pending") where.status = "PENDING";
     if (status === "confirmed") where.status = "CONFIRMED";
-    if (status === "delivered") where.status = "DELIVERED";
+    if (status === "received") where.status = "RECEIVED";
     if (status === "cancelled") where.status = "CANCELLED";
 
     // Sort by created_at
@@ -95,10 +95,21 @@ const cancelClientOrderById = async (req, res, next) => {
   }
 };
 
+const deleteClientOrderById = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const result = await clientOrderService.deleteClientOrderById(id);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getAllClientOrders,
   getClientOrderById,
   createClientOrder,
   updateClientOrderById,
   cancelClientOrderById,
+  deleteClientOrderById,
 };

@@ -6,10 +6,10 @@ const {
   validateUpdateClientOrderItem,
 } = require("../validators/client-order-item.validator");
 
-// getClientOrderItemsById
+// getItemsByClientOrder
 router.get(
-  "/client-order/:id_client_order/product/:id_product",
-  clientOrderItemController.getClientrOrderItemsById,
+  "/:id/client-order",
+  clientOrderItemController.getItemsByClientOrder,
 );
 
 // createClientOrderItem

@@ -122,7 +122,7 @@ const updateClientOrderById = async (id, newStatus) => {
   const validTransitions = {
     PENDING: ["CONFIRMED", "CANCELLED"],
     CONFIRMED: ["CANCELLED"],
-    CANCELLED: [],
+    CANCELLED: ["PENDING"],
   };
 
   if (!validTransitions[order.status]?.includes(newStatus)) {
@@ -297,8 +297,35 @@ const updateClientOrderById = async (id, newStatus) => {
   // PENDING -> CANCELLED
   return await prisma.clientOrder.update({
     where: { id_client_order: id },
-    data: { status: "CANCELLED" },
+    data: { status: newStatus },
   });
+};
+
+// ONLY FOR DEBUGGING PURPOSES, NOT EXPOSED IN CONTROLLER
+const deleteClientOrderById = async (id) => {
+  const order = await prisma.clientOrder.findUnique({
+    where: { id_client_order: id },
+  });
+
+  if (!order) {
+    throw {
+      status: 404,
+      message: "Client Order not found",
+    };
+  }
+
+  if (order.status !== "CANCELLED") {
+    throw {
+      status: 400,
+      message: "Only cancelled orders can be deleted",
+    };
+  }
+
+  await prisma.clientOrder.delete({
+    where: { id_client_order: id },
+  });
+
+  return { message: `Client Order --${id}-- successfully deleted` };
 };
 
 module.exports = {
@@ -307,4 +334,5 @@ module.exports = {
   getClientOrderById,
   createClientOrder,
   updateClientOrderById,
+  deleteClientOrderById,
 };

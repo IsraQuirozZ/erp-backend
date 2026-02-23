@@ -1,7 +1,4 @@
-const {
-  validateIntField,
-  validateDecimalField,
-} = require("../utils/validators.utils");
+const { validateIntField } = require("../utils/validators.utils");
 const validateCreateSupplierOrderItem = async (req, res, next) => {
   if (req.body.subtotal !== undefined || req.body.unit_price !== undefined) {
     return res.status(400).json({

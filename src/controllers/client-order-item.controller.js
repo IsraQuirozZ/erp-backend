@@ -1,19 +1,35 @@
 const clientOrderItemService = require("../services/client-order-item.service");
 
-const getClientrOrderItemsById = async (req, res, next) => {
+// getItemsByClientOrder
+const getItemsByClientOrder = async (req, res, next) => {
   try {
-    const id_client_order = Number(req.params.id_client_order);
-    const id_product = Number(req.params.id_product);
-    const orderItems = await clientOrderItemService.getClientrOrderItemsById(
-      id_client_order,
-      id_product,
-    );
-    res.json(orderItems);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const id = Number(req.params.id);
+    const sort = req.query.sort || "product.name";
+    const order = req.query.order === "desc" ? "desc" : "asc";
+    let orderBy = [];
+    if (sort === "product.name") orderBy = [{ product: { name: order } }];
+
+    const [items, total] = await Promise.all([
+      clientOrderItemService.getItemsByClientOrder(id, {
+        skip,
+        take: limit,
+        orderBy,
+      }),
+      clientOrderItemService.countItemsByClientOrder(id),
+    ]);
+
+    const pages = Math.ceil(total / limit);
+    res.json({ data: items, page, pages, total });
   } catch (error) {
     next(error);
   }
 };
 
+// CREATE (UPSERT)
 const createClientOrderItem = async (req, res, next) => {
   try {
     const orderItem = await clientOrderItemService.createClientOrderItem(
@@ -25,6 +41,7 @@ const createClientOrderItem = async (req, res, next) => {
   }
 };
 
+// UPDATE
 const updateClientOrderItemById = async (req, res, next) => {
   try {
     const id_client_order = Number(req.params.id_client_order);
@@ -57,7 +74,7 @@ const deleteClientOrderItemById = async (req, res, next) => {
 };
 
 module.exports = {
-  getClientrOrderItemsById,
+  getItemsByClientOrder,
   createClientOrderItem,
   updateClientOrderItemById,
   deleteClientOrderItemById,
