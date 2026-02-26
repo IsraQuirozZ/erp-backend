@@ -24,7 +24,7 @@ const countOrders = async (where) => {
 const getClientOrderById = async (id) => {
   const order = await prisma.clientOrder.findUnique({
     where: { id_client_order: id },
-    include: { client: true },
+    include: { client: true, warehouse: true, invoices: true },
   });
 
   if (!order) {
@@ -122,7 +122,7 @@ const updateClientOrderById = async (id, newStatus) => {
   const validTransitions = {
     PENDING: ["CONFIRMED", "CANCELLED"],
     CONFIRMED: ["CANCELLED"],
-    CANCELLED: ["PENDING"],
+    CANCELLED: [],
   };
 
   if (!validTransitions[order.status]?.includes(newStatus)) {
@@ -190,9 +190,9 @@ const updateClientOrderById = async (id, newStatus) => {
               id_component: Number(componentId),
               id_warehouse: warehouseId,
             },
-            data: {
-              current_stock: { decrement: quantity },
-            },
+          },
+          data: {
+            current_stock: { decrement: quantity },
           },
         });
 
@@ -218,6 +218,51 @@ const updateClientOrderById = async (id, newStatus) => {
           estimated_delivery_date: new Date(
             new Date().setDate(new Date().getDate() + 5),
           ),
+        },
+      });
+
+      // CREATE INVOICE --> ISSUED
+      const existingInvoice = await tx.clientInvoice.findFirst({
+        where: { id_client_order: id },
+      });
+
+      if (existingInvoice && existingInvoice.status !== "CANCELLED") {
+        throw {
+          status: 400,
+          message: "An invoice for this client order already exists",
+        };
+      }
+
+      const year = new Date().getFullYear();
+
+      const lastInvoice = await tx.clientInvoice.findFirst({
+        where: {
+          invoice_number: {
+            startsWith: `CLI-${year}-`,
+          },
+        },
+        orderBy: {
+          created_at: "desc",
+        },
+      });
+
+      let invoiceNumber;
+
+      if (lastInvoice) {
+        const lastNumber = parseInt(lastInvoice.invoice_number.split("-")[2]);
+        invoiceNumber = `CLI-${year}-${String(lastNumber + 1).padStart(4, "0")}`;
+      } else {
+        invoiceNumber = `CLI-${year}-0001`;
+      }
+
+      const invoice = await tx.clientInvoice.create({
+        data: {
+          id_client_order: id,
+          invoice_number: invoiceNumber,
+          invoice_date: new Date(),
+          total: order.total,
+          status: "ISSUED",
+          id_client: order.id_client,
         },
       });
 
@@ -251,11 +296,10 @@ const updateClientOrderById = async (id, newStatus) => {
         }
       }
 
-      // RETURN STOCK & Create inventoryMovement (IN)
       for (const componentId in componentConsumption) {
         const quantity = componentConsumption[componentId];
 
-        await tx.supplierProductInventory.update({
+        await tx.componentInventory.update({
           where: {
             id_component_id_warehouse: {
               id_component: Number(componentId),
@@ -273,20 +317,43 @@ const updateClientOrderById = async (id, newStatus) => {
             id_warehouse: warehouseId,
             id_client_order: id,
             movement_type: "IN",
-            quantity: quantity,
+            quantity,
           },
         });
       }
 
-      // CANCEL SHIPMENT IF EXISTS
       if (order.shipment) {
+        if (order.shipment.status === "DELIVERED") {
+          throw {
+            status: 409,
+            message: "Cannot cancel order: shipment already delivered",
+          };
+        }
+
         await tx.shipment.update({
           where: { id_shipment: order.shipment.id_shipment },
           data: { status: "CANCELLED" },
         });
       }
 
-      // CANCEL ORDER
+      const invoice = await tx.clientInvoice.findFirst({
+        where: { id_client_order: id },
+      });
+
+      if (invoice) {
+        if (invoice.status === "PAID") {
+          throw {
+            status: 409,
+            message: "Cannot cancel order: invoice already paid",
+          };
+        }
+
+        await tx.clientInvoice.update({
+          where: { id_client_invoice: invoice.id_client_invoice },
+          data: { status: "CANCELLED" },
+        });
+      }
+
       return await tx.clientOrder.update({
         where: { id_client_order: id },
         data: { status: "CANCELLED" },
